@@ -113,3 +113,5 @@ GET /api/regulator/{id}/verify-chain | GET /qr/{id}.png (encodes /p/{id}) | GET 
 5. Ready meal with carbon calculator (code only, demo emission factors labelled as estimates)
 6. Review queue for low-confidence facts
 7. Evaluation page, mock labels with QR, polish
+
+SPEC.md is the full reference. Skip passport.py and the QR route for now. Slice 1 test 5 becomes: GET /p/tshirt-001 returns the shopper page showing ‘under review’.
