@@ -13,7 +13,10 @@ NOW = datetime(2026, 11, 16, 12, 0, tzinfo=timezone.utc)
 
 def load_facts() -> list[Fact]:
     facts = []
-    for p in sorted((DATA / "mock_extractions").glob("*.json")):
+    # Only the t-shirt's documents: other products' mocks must not leak into the tshirt fixtures.
+    tshirt = json.loads((DATA / "products.json").read_text(encoding="utf-8"))["tshirt-001"]
+    for doc in sorted(d["doc_id"] for d in tshirt["documents"]):
+        p = DATA / "mock_extractions" / f"{doc}.json"
         facts += [Fact(**f) for f in json.loads(p.read_text(encoding="utf-8"))["facts"]]
     return facts
 

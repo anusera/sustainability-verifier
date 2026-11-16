@@ -80,8 +80,8 @@ def test_unrun_product_is_not_verified(retailer):
         assert p["verified"] is False and p["tree"] is None
         for c in p["claims"]:
             assert c["verdict"] is None and c["badge"] == "none" and c["label"] == "Not yet verified"
-    assert body["summary"]["not_yet_verified"] == 2
-    assert body["summary"]["total_claims"] == 2
+    assert body["summary"]["not_yet_verified"] == 4
+    assert body["summary"]["total_claims"] == 4
 
 
 def test_after_run_counts_match_verdicts(retailer):
@@ -93,7 +93,7 @@ def test_after_run_counts_match_verdicts(retailer):
     assert claim["reason"]
     assert {k["check_id"]: k["result"] for k in claim["checks"]} == {"origin_match": "fail", "cert_validity": "fail"}
     s = body["summary"]
-    assert (s["verified"], s["contradicted"], s["needs_evidence"], s["not_yet_verified"]) == (0, 1, 0, 1)
+    assert (s["verified"], s["contradicted"], s["needs_evidence"], s["not_yet_verified"]) == (0, 1, 0, 3)
     assert s["verified"] + s["contradicted"] + s["needs_evidence"] + s["not_yet_verified"] == s["total_claims"]
     assert tee["tree"]["status"] != "no_facts"
 

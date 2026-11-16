@@ -180,7 +180,17 @@ def _packaging_rules(claim, facts, today, supply_chain) -> list[Check]:
     ]
 
 
-RULESETS = {"origin": _origin_rules, "packaging": _packaging_rules}
+def _packaging_wording_rules(claim, facts, today, supply_chain) -> list[Check]:
+    """Packaging claims with no number to compare: no recycled_content_match."""
+    return [
+        cert_validity(facts, today),
+        tier_coverage(supply_chain or [], facts),
+        vague_claim(claim["text"]),
+    ]
+
+
+RULESETS = {"origin": _origin_rules, "packaging": _packaging_rules,
+            "packaging_wording": _packaging_wording_rules}
 
 
 def run_rules(claim: dict, facts: list[Fact], today: date | None = None,

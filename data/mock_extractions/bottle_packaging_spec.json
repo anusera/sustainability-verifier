@@ -1,0 +1,45 @@
+{
+  "doc_id": "bottle_packaging_spec",
+  "facts": [
+    {
+      "fact_id": "f-b2-1",
+      "doc_id": "bottle_packaging_spec",
+      "supplier": "Northfield PET Converters Ltd",
+      "tier": 2,
+      "material": "PET bottle body",
+      "recycled_content_pct": 60,
+      "weight_kg": 0.0125,
+      "document_date": "2026-09-14",
+      "source_file": "bottle_packaging_spec.txt",
+      "source_page": 1,
+      "source_quote": "Body        PET (bottle body)     60% recycled PET    0.0125",
+      "confidence": 0.95
+    },
+    {
+      "fact_id": "f-b2-2",
+      "doc_id": "bottle_packaging_spec",
+      "supplier": "Northfield PET Converters Ltd",
+      "tier": 2,
+      "material": "HDPE cap",
+      "weight_kg": 0.0021,
+      "document_date": "2026-09-14",
+      "source_file": "bottle_packaging_spec.txt",
+      "source_page": 1,
+      "source_quote": "Cap         HDPE                  virgin resin        0.0021",
+      "confidence": 0.9
+    },
+    {
+      "fact_id": "f-b2-3",
+      "doc_id": "bottle_packaging_spec",
+      "supplier": "Northfield PET Converters Ltd",
+      "tier": 2,
+      "material": "PP film label",
+      "weight_kg": 0.0004,
+      "document_date": "2026-09-14",
+      "source_file": "bottle_packaging_spec.txt",
+      "source_page": 1,
+      "source_quote": "Label       PP film               n/a                 0.0004",
+      "confidence": 0.9
+    }
+  ]
+}

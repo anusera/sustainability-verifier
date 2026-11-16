@@ -1,0 +1,36 @@
+{
+  "doc_id": "bottle_recycled_certificate",
+  "facts": [
+    {
+      "fact_id": "f-b3-1",
+      "doc_id": "bottle_recycled_certificate",
+      "supplier": "Northfield PET Converters Ltd",
+      "tier": 2,
+      "material": "PET bottle bodies",
+      "certification_body": "Recycled Content Certification (demo certifier)",
+      "certificate_id": "RCC-DEMO-77120",
+      "valid_from": "2026-01-15",
+      "valid_to": "2029-01-14",
+      "document_date": null,
+      "source_file": "bottle_recycled_certificate.txt",
+      "source_page": 1,
+      "source_quote": "Valid from:           15 January 2026\nValid to:             14 January 2029",
+      "confidence": 0.95
+    },
+    {
+      "fact_id": "f-b3-2",
+      "doc_id": "bottle_recycled_certificate",
+      "supplier": "Northfield PET Converters Ltd",
+      "tier": 2,
+      "material": "PET bottle bodies",
+      "certification_body": "Recycled Content Certification (demo certifier)",
+      "certificate_id": "RCC-DEMO-77120",
+      "recycled_content_pct": 60,
+      "document_date": null,
+      "source_file": "bottle_recycled_certificate.txt",
+      "source_page": 1,
+      "source_quote": "contain at least 60% recycled PET within the stated scope and validity period.",
+      "confidence": 0.9
+    }
+  ]
+}

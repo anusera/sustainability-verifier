@@ -1,0 +1,16 @@
+NORTHFIELD PET CONVERTERS LTD
+PACKAGING SPECIFICATION  ref PS-0500-B   rev 3
+
+Product:        Spring Water 500ml (product id: bottle-001)
+Spec date:      14 September 2026
+Issued by:      Northfield PET Converters Ltd, Tallow Bridge, UK (Tier 2)
+
+Component   Material              Recycled content    Weight (kg)
+----------  --------------------  ------------------  -----------
+Body        PET (bottle body)     60% recycled PET    0.0125
+Cap         HDPE                  virgin resin        0.0021
+Label       PP film               n/a                 0.0004
+
+Notes: body = 60% rPET / 40% virgin PET blend, per customer order 7731.
+       Cap and label figures are for information only.
+Resin supplied by:  Ridgeway Resin Supply (Tier 3)

@@ -1,0 +1,18 @@
+{
+  "doc_id": "bottle_declaration",
+  "facts": [
+    {
+      "fact_id": "f-b1-1",
+      "doc_id": "bottle_declaration",
+      "supplier": "Clearbrook Bottling Co.",
+      "tier": 1,
+      "material": "PET bottle body",
+      "recycled_content_pct": 100,
+      "document_date": "2026-10-12",
+      "source_file": "bottle_declaration.txt",
+      "source_page": 1,
+      "source_quote": "We declare that the bottle body of this product is 100% recycled PET (rPET).",
+      "confidence": 0.9
+    }
+  ]
+}

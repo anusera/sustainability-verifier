@@ -21,5 +21,40 @@
       {"tier": 2, "supplier": "Coimbatore Textile Mills"},
       {"tier": 3, "supplier": "Delta Ginning Co."}
     ]
+  },
+  "bottle-001": {
+    "product_id": "bottle-001",
+    "name": "Spring Water 500ml",
+    "claims": [
+      {
+        "claim_id": "c1",
+        "type": "packaging",
+        "text": "100% recycled bottle",
+        "claimed_recycled_pct": 100
+      }
+    ],
+    "documents": [
+      {"doc_id": "bottle_declaration", "tier": 1, "file": "bottle_declaration.txt"},
+      {"doc_id": "bottle_packaging_spec", "tier": 2, "file": "bottle_packaging_spec.txt"},
+      {"doc_id": "bottle_recycled_certificate", "tier": 2, "file": "bottle_recycled_certificate.txt"}
+    ],
+    "supply_chain": [
+      {"tier": 1, "supplier": "Clearbrook Bottling Co."},
+      {"tier": 2, "supplier": "Northfield PET Converters Ltd"},
+      {"tier": 3, "supplier": "Ridgeway Resin Supply"}
+    ]
+  },
+  "bottle-eco-001": {
+    "product_id": "bottle-eco-001",
+    "name": "Spring Water 330ml",
+    "claims": [
+      {"claim_id": "c1", "type": "packaging_wording", "text": "Eco-friendly packaging"}
+    ],
+    "documents": [
+      {"doc_id": "eco_bottle_statement", "tier": 1, "file": "eco_bottle_statement.txt"}
+    ],
+    "supply_chain": [
+      {"tier": 1, "supplier": "Clearbrook Bottling Co."}
+    ]
   }
 }

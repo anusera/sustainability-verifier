@@ -14,6 +14,7 @@ def _dedupe(items: list[str]) -> list[str]:
 REQUIRED_FACT = {
     "origin": (lambda f: bool(f.origin_country), "no fact states an origin country"),
     "packaging": (lambda f: f.recycled_content_pct is not None, "no fact states recycled content"),
+    "packaging_wording": (lambda f: True, "no facts found"),
 }
 
 # Failed checks that cap the verdict at Self-declared only ("Not yet proven") rather than contradict.

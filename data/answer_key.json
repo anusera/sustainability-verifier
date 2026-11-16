@@ -23,5 +23,46 @@
         ]
       }
     }
+  },
+  "bottle-001": {
+    "claims": {
+      "c1": {
+        "claim_text": "100% recycled bottle",
+        "expected_verdict": "Contradicted",
+        "expected_failing_checks": ["recycled_content_match", "tier_coverage"],
+        "planted_flaws": [
+          {
+            "flaw_id": "recycled_content_mismatch",
+            "check_id": "recycled_content_match",
+            "fact_id": "f-b2-1",
+            "source_file": "bottle_packaging_spec.txt",
+            "description": "Spec states 60% recycled PET for the bottle body (certificate agrees); claim says 100%"
+          },
+          {
+            "flaw_id": "missing_tier3_supplier",
+            "check_id": "tier_coverage",
+            "description": "Tier 3 resin supplier (Ridgeway Resin Supply) has no documents"
+          }
+        ]
+      }
+    }
+  },
+  "bottle-eco-001": {
+    "claims": {
+      "c1": {
+        "claim_text": "Eco-friendly packaging",
+        "expected_verdict": "Self-declared only",
+        "expected_failing_checks": ["vague_claim"],
+        "planted_flaws": [
+          {
+            "flaw_id": "vague_wording",
+            "check_id": "vague_claim",
+            "fact_id": "f-e1-1",
+            "source_file": "eco_bottle_statement.txt",
+            "description": "'eco-friendly' is unqualified and cannot be proven as written"
+          }
+        ]
+      }
+    }
   }
 }

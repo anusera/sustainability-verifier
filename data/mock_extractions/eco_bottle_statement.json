@@ -1,0 +1,17 @@
+{
+  "doc_id": "eco_bottle_statement",
+  "facts": [
+    {
+      "fact_id": "f-e1-1",
+      "doc_id": "eco_bottle_statement",
+      "supplier": "Clearbrook Bottling Co.",
+      "tier": 1,
+      "material": "Packaging (supplier statement)",
+      "document_date": "2026-11-03",
+      "source_file": "eco_bottle_statement.txt",
+      "source_page": 1,
+      "source_quote": "Our 330ml range is packed in eco-friendly packaging.",
+      "confidence": 0.9
+    }
+  ]
+}

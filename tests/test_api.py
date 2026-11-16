@@ -219,4 +219,8 @@ def test_missing_mock_extraction_is_listed_not_fatal(client, env):
 
 
 def test_products_list(client):
-    assert client.get("/api/products").json() == [{"product_id": "tshirt-001", "name": "Everyday Organic Tee"}]
+    assert client.get("/api/products").json() == [
+        {"product_id": "tshirt-001", "name": "Everyday Organic Tee"},
+        {"product_id": "bottle-001", "name": "Spring Water 500ml"},
+        {"product_id": "bottle-eco-001", "name": "Spring Water 330ml"},
+    ]
