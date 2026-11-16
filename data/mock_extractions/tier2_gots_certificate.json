@@ -1,0 +1,22 @@
+{
+  "doc_id": "tier2_gots_certificate",
+  "facts": [
+    {
+      "fact_id": "f-t2-1",
+      "doc_id": "tier2_gots_certificate",
+      "supplier": "Coimbatore Textile Mills",
+      "tier": 2,
+      "material": "Organic cotton yarn and fabric",
+      "origin_country": "India",
+      "certification_body": "Global Organic Textile Certification (demo certifier)",
+      "certificate_id": "GOT-IN-48213",
+      "valid_from": "2023-04-01",
+      "valid_to": "2026-03-31",
+      "document_date": "2023-04-01",
+      "source_file": "tier2_gots_certificate.txt",
+      "source_page": "1",
+      "source_quote": "Valid from:           01 April 2023\nValid to:             31 March 2026",
+      "confidence": 0.95
+    }
+  ]
+}

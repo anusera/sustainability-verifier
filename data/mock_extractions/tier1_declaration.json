@@ -1,0 +1,18 @@
+{
+  "doc_id": "tier1_declaration",
+  "facts": [
+    {
+      "fact_id": "f-t1-1",
+      "doc_id": "tier1_declaration",
+      "supplier": "Sunrise Garments Pvt Ltd",
+      "tier": 1,
+      "material": "Organic cotton",
+      "origin_country": "India",
+      "document_date": "2026-06-12",
+      "source_file": "tier1_declaration.txt",
+      "source_page": "1",
+      "source_quote": "the organic cotton used in the\nEveryday Organic Tee (product id: tshirt-001) is sourced in India.",
+      "confidence": 0.9
+    }
+  ]
+}

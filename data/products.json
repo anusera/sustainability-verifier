@@ -1,0 +1,25 @@
+{
+  "tshirt-001": {
+    "product_id": "tshirt-001",
+    "name": "Everyday Organic Tee",
+    "claims": [
+      {
+        "claim_id": "c1",
+        "type": "origin",
+        "text": "Organic cotton from India",
+        "claimed_origin": "India"
+      }
+    ],
+    "documents": [
+      {"doc_id": "tshirt_bom", "tier": 1, "file": "tshirt_bom.txt"},
+      {"doc_id": "tier1_declaration", "tier": 1, "file": "tier1_declaration.txt"},
+      {"doc_id": "tier2_gots_certificate", "tier": 2, "file": "tier2_gots_certificate.txt"},
+      {"doc_id": "tier3_ginning_invoice", "tier": 3, "file": "tier3_ginning_invoice.txt"}
+    ],
+    "supply_chain": [
+      {"tier": 1, "supplier": "Sunrise Garments Pvt Ltd"},
+      {"tier": 2, "supplier": "Coimbatore Textile Mills"},
+      {"tier": 3, "supplier": "Delta Ginning Co."}
+    ]
+  }
+}

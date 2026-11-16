@@ -1,0 +1,16 @@
+SUNRISE GARMENTS PVT LTD
+BILL OF MATERIALS
+
+Product:        Everyday Organic Tee (product id: tshirt-001)
+BOM date:       15 March 2026
+Prepared by:    Sunrise Garments Pvt Ltd, Tiruppur, India (Tier 1)
+
+Component        Material                  Weight (kg)   Supplied by
+---------------  ------------------------  ------------  ---------------------------
+Fabric           Organic cotton jersey     0.18          Coimbatore Textile Mills
+Thread           Cotton sewing thread      0.01          Coimbatore Textile Mills
+
+Total garment weight: 0.19 kg
+
+Supply chain:
+  Sunrise Garments Pvt Ltd  >  Coimbatore Textile Mills  >  Delta Ginning Co.

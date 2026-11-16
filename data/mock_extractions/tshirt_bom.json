@@ -1,0 +1,31 @@
+{
+  "doc_id": "tshirt_bom",
+  "facts": [
+    {
+      "fact_id": "f-bom-1",
+      "doc_id": "tshirt_bom",
+      "supplier": "Sunrise Garments Pvt Ltd",
+      "tier": 1,
+      "material": "Organic cotton jersey (fabric)",
+      "weight_kg": 0.18,
+      "document_date": "2026-03-15",
+      "source_file": "tshirt_bom.txt",
+      "source_page": "1",
+      "source_quote": "Fabric           Organic cotton jersey     0.18          Coimbatore Textile Mills",
+      "confidence": 0.95
+    },
+    {
+      "fact_id": "f-bom-2",
+      "doc_id": "tshirt_bom",
+      "supplier": "Sunrise Garments Pvt Ltd",
+      "tier": 1,
+      "material": "Cotton sewing thread",
+      "weight_kg": 0.01,
+      "document_date": "2026-03-15",
+      "source_file": "tshirt_bom.txt",
+      "source_page": "1",
+      "source_quote": "Thread           Cotton sewing thread      0.01          Coimbatore Textile Mills",
+      "confidence": 0.95
+    }
+  ]
+}

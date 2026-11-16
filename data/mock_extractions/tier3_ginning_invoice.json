@@ -1,0 +1,19 @@
+{
+  "doc_id": "tier3_ginning_invoice",
+  "facts": [
+    {
+      "fact_id": "f-t3-1",
+      "doc_id": "tier3_ginning_invoice",
+      "supplier": "Delta Ginning Co.",
+      "tier": 3,
+      "material": "Raw organic cotton lint",
+      "origin_country": "Bangladesh",
+      "weight_kg": 18000,
+      "document_date": "2026-05-02",
+      "source_file": "tier3_ginning_invoice.txt",
+      "source_page": "1",
+      "source_quote": "Country of origin: Bangladesh",
+      "confidence": 0.97
+    }
+  ]
+}
