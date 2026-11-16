@@ -24,7 +24,7 @@ class Fact(BaseModel):
     document_date: Optional[str] = None
     recycled_content_pct: Optional[float] = None
     weight_kg: Optional[float] = None
-    source_page: Optional[str] = None  # page number or cell reference
+    source_page: Optional[int] = None  # page number
     confidence: Optional[float] = None
 
 

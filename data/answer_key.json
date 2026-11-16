@@ -1,0 +1,27 @@
+{
+  "tshirt-001": {
+    "claims": {
+      "c1": {
+        "claim_text": "Organic cotton from India",
+        "expected_verdict": "Contradicted",
+        "expected_failing_checks": ["origin_match", "cert_validity"],
+        "planted_flaws": [
+          {
+            "flaw_id": "origin_mismatch",
+            "check_id": "origin_match",
+            "fact_id": "f-t3-1",
+            "source_file": "tier3_ginning_invoice.txt",
+            "description": "Tier-3 ginning invoice 2291 states 'Country of origin: Bangladesh'; claim says India"
+          },
+          {
+            "flaw_id": "expired_certificate",
+            "check_id": "cert_validity",
+            "fact_id": "f-t2-1",
+            "certificate_id": "GOT-IN-48213",
+            "description": "Certificate valid_to 2026-03-31 is before the 2026-05-02 ginning invoice and before today"
+          }
+        ]
+      }
+    }
+  }
+}

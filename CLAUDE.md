@@ -72,8 +72,8 @@ report the first broken entry).
 ## Rules (slice 1)
 - origin_match: compare claimed_origin with origin_country on every fact. Any mismatch fails; evidence lists the
   conflicting facts.
-- cert_validity: for any fact with valid_to, fail if valid_to is earlier than the document_date of downstream
-  documents (the May invoice) or earlier than today. Say which one failed.
+- cert_validity: for any fact with valid_to, fail if valid_to is earlier than the document_date of any other
+  document that has a document_date (e.g. the May invoice) or earlier than today. Say which one failed.
 
 ## Verdict logic (slice 1)
 Any failed origin check -> Contradicted. No fails but no third-party evidence -> Self-declared only.

@@ -119,7 +119,7 @@ Priority: **M** = must (slice 1), **S** = should (full demo), **C** = could.
 | source_file | string | yes |
 | source_page | int | no (use the same type everywhere; for spreadsheets add `source_cell`) |
 | source_quote | string (verbatim) | yes |
-| confidence | float 0 to 1 | no (default 1.0 in mock mode) |
+| confidence | float 0 to 1 | no (model default is None; mock extraction files set it explicitly) |
 
 ### 6.2 Check
 ```json
@@ -167,7 +167,7 @@ Footer on every shopper page: "This page supports, but does not replace, claims 
 | Check | Logic |
 |---|---|
 | `origin_match` | Compare the claimed origin with `origin_country` on every fact that has one. Any mismatch fails; evidence lists the conflicting facts and the matching ones |
-| `cert_validity` | For each fact with `valid_to`, fail if `valid_to` is earlier than the `document_date` of any downstream fact that has one, or earlier than today. The detail states which comparison failed. Facts with null `document_date` are skipped in the downstream comparison |
+| `cert_validity` | For each fact with `valid_to`, fail if `valid_to` is earlier than the `document_date` of any fact from a different document that has one, or earlier than today. The detail states which comparison failed. Facts with null `document_date` are skipped in the comparison |
 | `weight_reconciliation` (later) | Component weights sum to the stated total within a tolerance |
 | `recycled_content_match` (later) | Claimed percentage does not exceed the specified or certified percentage |
 | `tier_coverage` (later) | Every supplier in the bill of materials has at least one fact; otherwise Missing evidence |
