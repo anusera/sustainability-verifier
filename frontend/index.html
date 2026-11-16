@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sustainability Claim Verifier</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 640px; margin-inline: auto; color: #1a1a1a; line-height: 1.5; }
+  h1 { font-size: 1.4rem; }
+  input { font: inherit; padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+  button { font: inherit; padding: 8px 12px; margin: 0 8px 8px 0; cursor: pointer; }
+  #msg { color: #8a1c1c; min-height: 1.5em; }
+  li { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<h1>Sustainability Claim Verifier</h1>
+<label for="code">Product code</label>
+<input id="code" type="text" autocomplete="off" placeholder="e.g. tshirt-001">
+<button id="shopper" type="button">View as shopper</button>
+<button id="regulator" type="button">View as regulator</button>
+<p id="msg" role="status"></p>
+<h2>Products</h2>
+<ul id="list"></ul>
+<script>
+(function () {
+  var products = [];
+  var codeEl = document.getElementById("code");
+  var msg = document.getElementById("msg");
+
+  function go(prefix) {
+    var code = codeEl.value.trim();
+    var found = products.some(function (p) { return p.product_id === code; });
+    if (!code || !found) { msg.textContent = "No product found for this code"; return; }
+    msg.textContent = "";
+    window.location.href = prefix + encodeURIComponent(code);
+  }
+  document.getElementById("shopper").addEventListener("click", function () { go("/p/"); });
+  document.getElementById("regulator").addEventListener("click", function () { go("/regulator/"); });
+  codeEl.addEventListener("keydown", function (e) { if (e.key === "Enter") go("/p/"); });
+
+  function link(text, href) {
+    var a = document.createElement("a");
+    a.textContent = text;
+    a.href = href;
+    return a;
+  }
+
+  fetch("/api/products").then(function (r) { return r.json(); }).then(function (data) {
+    products = data;
+    var list = document.getElementById("list");
+    data.forEach(function (p) {
+      var li = document.createElement("li");
+      var name = document.createElement("strong");
+      name.textContent = p.name + " (" + p.product_id + ") ";
+      li.appendChild(name);
+      li.appendChild(link("Shopper", "/p/" + encodeURIComponent(p.product_id)));
+      li.appendChild(document.createTextNode(" | "));
+      li.appendChild(link("Regulator", "/regulator/" + encodeURIComponent(p.product_id)));
+      list.appendChild(li);
+    });
+  }).catch(function () { msg.textContent = "Could not load the product list."; });
+})();
+</script>
+</body>
+</html>

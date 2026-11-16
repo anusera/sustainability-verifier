@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict
 
 from . import audit
@@ -22,6 +23,15 @@ from .pipeline import (
     load_products,
     load_snapshot,
     run_product,
+)
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+NOT_FOUND_HTML = (
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+    '<meta name="viewport" content="width=device-width, initial-scale=1">'
+    "<title>Product not found</title></head><body>"
+    '<h1>Product not found</h1><p>We could not find that product code.</p>'
+    '<p><a href="/">Back to home</a></p></body></html>'
 )
 
 COOKIE_NAME = "regulator_session"
@@ -199,6 +209,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except Exception:
             pass  # a corrupted log must not hide the integrity result
         return result
+
+    def page(name: str) -> HTMLResponse:
+        return HTMLResponse((FRONTEND_DIR / name).read_text(encoding="utf-8"))
+
+    def product_page(product_id: str, name: str) -> HTMLResponse:
+        try:
+            get_product(product_id, products_path=st.products_path)
+        except UnknownProduct:
+            return HTMLResponse(NOT_FOUND_HTML, status_code=404)
+        return page(name)
+
+    @app.get("/", response_class=HTMLResponse)
+    def home() -> HTMLResponse:
+        return page("index.html")
+
+    @app.get("/p/{product_id}", response_class=HTMLResponse)
+    def shopper_page(product_id: str) -> HTMLResponse:
+        return product_page(product_id, "shopper.html")
+
+    @app.get("/regulator/{product_id}", response_class=HTMLResponse)
+    def regulator_page(product_id: str) -> HTMLResponse:
+        # The HTML is not gated; the data behind /api/regulator is.
+        return product_page(product_id, "regulator.html")
 
     return app
 

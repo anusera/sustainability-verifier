@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regulator view</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 1000px; margin-inline: auto; color: #1a1a1a; line-height: 1.45; }
+  h1 { font-size: 1.4rem; } h2 { font-size: 1.1rem; margin-top: 28px; border-bottom: 1px solid #ccc; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+  .tablewrap { overflow-x: auto; }
+  .fail { font-weight: 700; color: #8a1c1c; } .pass { font-weight: 700; color: #1d5a2c; }
+  tr.contra td { background: #fde8e8; border-color: #8a1c1c; }
+  .tag { font-weight: 700; color: #8a1c1c; }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 0.8rem; }
+  .muted { color: #555; }
+  .nodocs { border-style: dashed; color: #666; }
+  ul.tree { list-style: none; padding-left: 20px; border-left: 2px solid #aaa; }
+  ul.tree.root { padding-left: 0; border-left: 0; }
+  .node { display: inline-block; border: 1px solid #444; border-radius: 6px; padding: 4px 8px; margin: 4px 0; }
+  input { font: inherit; padding: 6px; margin: 0 8px 8px 0; }
+  button { font: inherit; padding: 6px 12px; cursor: pointer; }
+  #integrity { margin-left: 8px; font-weight: 700; }
+  .timeline li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<h1 id="title">Regulator view</h1>
+<p><a href="/">Home</a></p>
+<div id="signin" hidden>
+  <h2>Sign in</h2>
+  <p class="muted">Demo account: regulator / demo-regulator</p>
+  <form id="form">
+    <label>Username <input id="user" autocomplete="username"></label>
+    <label>Password <input id="pass" type="password" autocomplete="current-password"></label>
+    <button type="submit">Sign in</button>
+  </form>
+</div>
+<p id="status" role="status"></p>
+<div id="main" hidden>
+  <h2>Claims and verdicts</h2><div id="claims"></div>
+  <h2>Supplier tree</h2><div id="tree"></div>
+  <h2>Facts and source quotes</h2><div id="facts" class="tablewrap"></div>
+  <h2>Document hashes</h2><div id="docs" class="tablewrap"></div>
+  <h2>History</h2><ol id="history" class="timeline"></ol>
+  <h2>Integrity</h2>
+  <button id="verify" type="button">Verify integrity</button><span id="integrity" role="status"></span>
+</div>
+<script>
+(function () {
+  var id = decodeURIComponent(location.pathname.split("/").filter(Boolean).pop() || "");
+  var api = "/api/regulator/" + encodeURIComponent(id);
+  var $ = function (i) { return document.getElementById(i); };
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function val(v) { return v === null || v === undefined || v === "" ? "-" : String(v); }
+  function table(headers, rows, rowClass) {
+    var t = el("table"), thead = el("thead"), hr = el("tr");
+    headers.forEach(function (h) { hr.appendChild(el("th", "", h)); });
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = el("tbody");
+    rows.forEach(function (r) {
+      var tr = el("tr", rowClass ? rowClass(r) : "");
+      r.cells.forEach(function (c) {
+        var td = el("td");
+        if (c instanceof Node) td.appendChild(c); else td.textContent = val(c);
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    return t;
+  }
+  function clear(e) { e.textContent = ""; }
+
+  function showSignIn(msg) {
+    $("signin").hidden = false; $("main").hidden = true;
+    $("status").textContent = msg || "";
+  }
+
+  function renderClaims(data, failIds) {
+    var box = $("claims"); clear(box);
+    data.claims.forEach(function (c) {
+      var sec = el("section");
+      sec.appendChild(el("h3", "", c.claim_id + ": " + c.claim_text));
+      var p = el("p"); p.appendChild(el("strong", "", "Verdict: " + c.verdict.verdict));
+      sec.appendChild(p);
+      sec.appendChild(el("p", "", c.verdict.reason));
+      sec.appendChild(el("p", "muted", "Generated " + val(c.verdict.generated_at) + " | " + val(c.verdict.rules_version)));
+      var ul = el("ul");
+      c.checks.forEach(function (ck) {
+        var li = el("li");
+        li.appendChild(el("span", ck.result === "pass" ? "pass" : "fail", ck.result.toUpperCase()));
+        li.appendChild(document.createTextNode(" " + ck.check_id + ": " + ck.detail));
+        ul.appendChild(li);
+        if (ck.result === "fail") (ck.evidence || []).forEach(function (f) { failIds[f] = true; });
+      });
+      sec.appendChild(ul);
+      box.appendChild(sec);
+    });
+  }
+
+  function renderTree(node, root) {
+    var ul = el("ul", root ? "tree root" : "tree");
+    var li = el("li");
+    var n = el("span", node.status === "no_facts" ? "node nodocs" : "node",
+      "Tier " + node.tier + ": " + node.supplier + " (" + node.fact_count + " facts" +
+      (node.status === "no_facts" ? ", no documents" : "") + ")");
+    li.appendChild(n);
+    (node.children || []).forEach(function (c) { li.appendChild(renderTree(c, false)); });
+    ul.appendChild(li);
+    return ul;
+  }
+
+  function render(data) {
+    $("signin").hidden = true; $("main").hidden = false; $("status").textContent = "";
+    $("title").textContent = data.product_name;
+    var failIds = {};
+    renderClaims(data, failIds);
+    clear($("tree")); $("tree").appendChild(renderTree(data.tree, true));
+
+    clear($("facts"));
+    $("facts").appendChild(table(
+      ["", "Fact", "Supplier", "Tier", "Origin", "File", "Page", "Quote", "Confidence"],
+      data.facts.map(function (f) {
+        var bad = !!failIds[f.fact_id];
+        return { bad: bad, cells: [bad ? el("span", "tag", "CONTRADICTS") : "", f.fact_id, f.supplier, f.tier,
+          f.origin_country, f.source_file, f.source_page, f.source_quote, f.confidence] };
+      }),
+      function (r) { return r.bad ? "contra" : ""; }));
+
+    clear($("docs"));
+    $("docs").appendChild(table(["File", "SHA-256", "Ingested at"],
+      data.documents.map(function (d) {
+        return { cells: [d.file, el("span", "mono", d.sha256), d.ingested_at] };
+      })));
+
+    var h = $("history"); clear(h);
+    data.history.forEach(function (e) {
+      var self = e.event_type === "regulator_access" ? " (viewer access)" : "";
+      var li = el("li");
+      li.appendChild(el("strong", "", e.timestamp + " - " + e.event_type + self));
+      li.appendChild(document.createTextNode(" by " + e.actor + " "));
+      li.appendChild(el("span", "mono muted", JSON.stringify(e.details)));
+      h.appendChild(li);
+    });
+  }
+
+  function load() {
+    fetch(api).then(function (r) {
+      if (r.status === 401) { showSignIn("Please sign in to view the evidence."); return null; }
+      if (r.status === 404) { showSignIn(""); $("signin").hidden = true; $("status").textContent = "Not yet verified. Run the product first."; return null; }
+      if (!r.ok) throw new Error("bad status");
+      return r.json();
+    }).then(function (d) { if (d) render(d); })
+      .catch(function () { $("status").textContent = "Could not load this page."; });
+  }
+
+  $("form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    fetch("/api/regulator/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: $("user").value, password: $("pass").value })
+    }).then(function (r) {
+      if (r.ok) { load(); } else { $("status").textContent = "Sign-in failed. Check the username and password."; }
+    }).catch(function () { $("status").textContent = "Sign-in failed."; });
+  });
+
+  $("verify").addEventListener("click", function () {
+    var out = $("integrity"); out.textContent = "Checking...";
+    fetch(api + "/verify-chain").then(function (r) {
+      if (r.status === 401) { showSignIn("Session expired. Please sign in."); return null; }
+      return r.json();
+    }).then(function (res) {
+      if (!res) return;
+      out.textContent = res.intact ? "Chain intact"
+        : "Broken at entry " + res.first_broken_entry + ": " + res.reason;
+    }).catch(function () { out.textContent = "Could not check integrity."; });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
