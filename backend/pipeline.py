@@ -13,7 +13,7 @@ from . import audit
 from .audit import DEFAULT_DOCS_DIR, DEFAULT_LOG_PATH, read_entries, sha256_file
 from .extract import DEFAULT_MOCK_DIR, ExtractionResult, RejectedFact, extract_facts
 from .models import Check, Fact, Verdict
-from .rules import run_rules
+from .rules import claim_type, run_rules
 from .timeutil import utc_now_iso
 from .verdict import decide_verdict
 
@@ -168,13 +168,15 @@ def run_product(
 
     claim_results: list[ClaimResult] = []
     for claim in product["claims"]:
-        checks = run_rules(claim, facts, today)
+        ctype = claim_type(claim)
+        checks = run_rules(claim, facts, today, product["supply_chain"])
         audit.append({
             "product_id": product_id,
             "event_type": "rules_run",
             "details": {"claim_id": claim["claim_id"], "checks": [f"{c.check_id}: {c.result}" for c in checks]},
         }, log_path=log_path)
-        verdict = decide_verdict(product_id, claim["claim_id"], checks, facts, product["supply_chain"], now)
+        verdict = decide_verdict(product_id, claim["claim_id"], checks, facts, product["supply_chain"], now,
+                                  claim_type=ctype)
         previous = previous_verdict_label(product_id, claim["claim_id"], log_path=log_path)
         changed = previous != verdict.verdict
         if changed:

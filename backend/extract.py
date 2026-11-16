@@ -58,6 +58,9 @@ def validate_quotes(facts: list[Fact], doc_text: str) -> tuple[list[Fact], list[
             rejected.append(RejectedFact(fact=fact, reason="source_quote is empty"))
         elif quote not in text:
             rejected.append(RejectedFact(fact=fact, reason="source_quote not found verbatim in document"))
+        elif fact.recycled_content_pct is not None and not 0 <= fact.recycled_content_pct <= 100:
+            rejected.append(RejectedFact(
+                fact=fact, reason=f"recycled_content_pct {fact.recycled_content_pct:g} is outside 0 to 100"))
         else:
             accepted.append(fact)
     return accepted, rejected
