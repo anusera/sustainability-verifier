@@ -63,7 +63,7 @@ def test_verdict_fields(facts, product, today, now):
     v = verdict_for(facts, product, today, now)
     assert v.reviewed_by_human is False
     assert v.rules_version == "rules-v1.0"
-    assert v.generated_at == now.isoformat()
+    assert v.generated_at == "2026-11-16T12:00:00Z"
     assert v.reason and "Bangladesh" in v.reason
 
 

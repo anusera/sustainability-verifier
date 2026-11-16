@@ -37,7 +37,8 @@ data/documents/{tshirt_bom,tier1_declaration,tier2_gots_certificate,tier3_ginnin
 data/mock_extractions/   # one JSON per document, same base names
 data/answer_key.json
 data/audit_log.jsonl     # created at runtime
-backend/{models,extract,rules,verdict,audit,passport,main}.py
+backend/{models,timeutil,extract,rules,verdict,audit,passport,main}.py   # timeutil: shared utc_now_iso()
+.gitattributes           # "data/documents/* -text": documents are hashed byte-exact, Git never rewrites line endings
 frontend/{shopper,regulator}.html
 tests/test_slice.py
 ```

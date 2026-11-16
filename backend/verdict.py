@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from .models import RULES_VERSION, Check, Fact, Verdict
 from .rules import CONTRADICTION_CHECKS
+from .timeutil import utc_now_iso
 
 
 def _dedupe(items: list[str]) -> list[str]:
@@ -57,6 +58,6 @@ def decide_verdict(
         checks=[f"{c.check_id}: {c.result}" for c in checks],
         evidence=_dedupe([e for c in checks for e in c.evidence]),
         reviewed_by_human=False,
-        generated_at=now.isoformat(),
+        generated_at=utc_now_iso(now),
         rules_version=RULES_VERSION,
     )

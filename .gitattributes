@@ -1,0 +1,2 @@
+# Source documents are hashed byte-for-byte; never let Git rewrite their line endings.
+data/documents/* -text

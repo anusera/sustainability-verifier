@@ -204,6 +204,8 @@ One JSON object per line in `data/audit_log.jsonl`.
 | prev_hash | 64 zeros for the first entry |
 | entry_hash | SHA-256 over all other fields in canonical JSON (sorted keys, no whitespace) |
 
+Implementation notes: `backend/audit.py` and `backend/verdict.py` share `backend/timeutil.py` (`utc_now_iso()`, Z-suffixed UTC, seconds precision). Documents are hashed in binary mode, and `.gitattributes` (`data/documents/* -text`) stops Git rewriting their line endings. `entry_id` starts at 1. Known limits: truncating the last entries, or rewriting the whole chain with recomputed hashes, is not detected without an external anchor.
+
 `verify_chain()` returns `{"intact": true}` or `{"intact": false, "first_broken_entry": n, "reason": "..."}`. This format is fixed; changing it breaks existing chains.
 
 ## 11. API
