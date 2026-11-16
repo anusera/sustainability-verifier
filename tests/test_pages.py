@@ -10,7 +10,7 @@ from backend.main import FRONTEND_DIR, Settings, create_app
 
 REPO = Path(__file__).resolve().parent.parent
 FOOTER = "This page supports, but does not replace, claims printed on pack."
-PAGES = ["index.html", "shopper.html", "regulator.html"]
+PAGES = ["index.html", "shopper.html", "regulator.html", "dashboard.html"]
 LABELS = ["Verified against supplier documents", "Supplier statement only", "Not yet proven",
           "This claim is under review", "Contradicted", "Self-declared only"]
 

@@ -212,7 +212,7 @@ Implementation notes: `backend/audit.py` and `backend/verdict.py` share `backend
 
 | Route | Purpose | Auth |
 |---|---|---|
-| `POST /api/run/{id}` | Ingest, extract, run rules, produce verdict, write log | Retailer (open in demo) |
+| `POST /api/run/{id}` | Ingest, extract, run rules, produce verdict, write log | Retailer sign-in required (401 without the retailer cookie; a regulator cookie does not count) |
 | `GET /api/public/{id}` | Shopper-safe data only | None |
 | `GET /api/regulator/{id}` | Verdict, checks, tree, facts with quotes, hashes, history | Regulator |
 | `GET /api/regulator/{id}/verify-chain` | Integrity result | Regulator |

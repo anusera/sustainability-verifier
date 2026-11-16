@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retailer dashboard</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 1000px; margin-inline: auto; color: #1a1a1a; line-height: 1.45; }
+  h1 { font-size: 1.4rem; } h2 { font-size: 1.1rem; margin: 0; }
+  h3 { font-size: 1rem; margin: 16px 0 6px; }
+  input { font: inherit; padding: 6px; margin: 0 8px 8px 0; }
+  button { font: inherit; padding: 6px 12px; cursor: pointer; }
+  .muted { color: #555; }
+  #summary { font-weight: 700; padding: 8px 0; }
+  .product { border: 1px solid #ccc; border-radius: 6px; margin-bottom: 12px; padding: 10px 12px; }
+  .phead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
+  .pname { background: none; border: 0; padding: 0; text-align: left; font-weight: 700; font-size: 1.05rem; }
+  .claim { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; border: 1px solid; font-weight: 700; font-size: 0.85rem; }
+  .badge.green { background: #e3f4e7; color: #1d5a2c; border-color: #1d5a2c; }
+  .badge.amber { background: #fff3d6; color: #7a4b00; border-color: #7a4b00; }
+  .badge.red { background: #fde8e8; color: #8a1c1c; border-color: #8a1c1c; }
+  .badge.none { background: #eee; color: #444; border-color: #888; }
+  .pass { font-weight: 700; color: #1d5a2c; } .fail { font-weight: 700; color: #8a1c1c; }
+  ul.tree { list-style: none; padding-left: 20px; border-left: 2px solid #aaa; }
+  ul.tree.root { padding-left: 0; border-left: 0; }
+  .node { display: inline-block; border: 2px solid; border-radius: 6px; padding: 4px 8px; margin: 4px 0; }
+  .node.ok { border-color: #1d5a2c; background: #e3f4e7; }
+  .node.contradicted { border-color: #8a1c1c; background: #fde8e8; }
+  .node.no_facts { border: 2px dashed #777; background: #f3f3f3; color: #555; }
+  .err { color: #8a1c1c; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>Retailer dashboard</h1>
+<p><a href="/">Home</a></p>
+<div id="signin" hidden>
+  <h2>Sign in</h2>
+  <p class="muted">Demo account (DEMO ONLY): retailer / demo-retailer</p>
+  <form id="form">
+    <label>Username <input id="user" autocomplete="username"></label>
+    <label>Password <input id="pass" type="password" autocomplete="current-password"></label>
+    <button type="submit">Sign in</button>
+  </form>
+</div>
+<p id="status" role="status"></p>
+<div id="main" hidden>
+  <p id="summary" role="status"></p>
+  <div id="list"></div>
+</div>
+<script>
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  var open = {};
+  var errors = {};
+  var busy = {};
+  var data = null;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function clear(e) { e.textContent = ""; }
+
+  function showSignIn(msg) {
+    $("signin").hidden = false; $("main").hidden = true;
+    $("status").textContent = msg || "";
+  }
+
+  var NODE_TEXT = { ok: "evidence found", contradicted: "contradicted by a check", no_facts: "no documents" };
+  function renderTree(node, root) {
+    var ul = el("ul", root ? "tree root" : "tree");
+    var li = el("li");
+    li.appendChild(el("span", "node " + node.status,
+      "Tier " + node.tier + ": " + node.supplier + " (" + node.fact_count + " facts, " +
+      (NODE_TEXT[node.status] || node.status) + ")"));
+    (node.children || []).forEach(function (c) { li.appendChild(renderTree(c, false)); });
+    ul.appendChild(li);
+    return ul;
+  }
+
+  function renderDetails(p) {
+    var box = el("div");
+    p.claims.forEach(function (c) {
+      box.appendChild(el("h3", "", c.claim_id + ": " + c.claim_text));
+      box.appendChild(el("p", "", c.reason ? c.reason : "Not yet verified. Run verification to see a reason."));
+      var ul = el("ul");
+      c.checks.forEach(function (k) {
+        var li = el("li");
+        li.appendChild(el("span", k.result === "pass" ? "pass" : "fail", k.result.toUpperCase()));
+        li.appendChild(document.createTextNode(" " + k.check_id + ": " + k.detail));
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    });
+    box.appendChild(el("h3", "", "Supplier tree"));
+    if (p.tree) box.appendChild(renderTree(p.tree, true));
+    else box.appendChild(el("p", "muted", "Not yet verified, so there is no supplier tree."));
+    return box;
+  }
+
+  function runProduct(id) {
+    busy[id] = true; errors[id] = null; render();
+    fetch("/api/run/" + encodeURIComponent(id), { method: "POST" }).then(function (r) {
+      if (r.status === 401) { showSignIn("Session expired. Please sign in."); return null; }
+      if (!r.ok) throw new Error("run failed");
+      return load();
+    }).catch(function () { errors[id] = "Verification failed. Try again."; })
+      .then(function () { busy[id] = false; render(); });
+  }
+
+  function render() {
+    if (!data) return;
+    var s = data.summary;
+    $("summary").textContent = s.verified + " verified, " + s.contradicted + " contradicted, " +
+      s.needs_evidence + " needs evidence, " + s.not_yet_verified + " not yet verified";
+    var list = $("list"); clear(list);
+    data.products.forEach(function (p) {
+      var card = el("section", "product");
+      var head = el("div", "phead");
+      var name = el("button", "pname", (open[p.product_id] ? "[-] " : "[+] ") + p.name + " (" + p.product_id + ")");
+      name.type = "button";
+      name.setAttribute("aria-expanded", open[p.product_id] ? "true" : "false");
+      name.addEventListener("click", function () { open[p.product_id] = !open[p.product_id]; render(); });
+      head.appendChild(name);
+      var run = el("button", "", busy[p.product_id] ? "Running..." : "Run verification");
+      run.type = "button"; run.disabled = !!busy[p.product_id];
+      run.addEventListener("click", function () { runProduct(p.product_id); });
+      head.appendChild(run);
+      card.appendChild(head);
+      if (errors[p.product_id]) card.appendChild(el("p", "err", errors[p.product_id]));
+      p.claims.forEach(function (c) {
+        var row = el("div", "claim");
+        row.appendChild(el("span", "badge " + c.badge, c.label));
+        row.appendChild(el("span", "", c.claim_text));
+        card.appendChild(row);
+      });
+      if (p.run_at) card.appendChild(el("p", "muted", "Last run " + p.run_at));
+      if (open[p.product_id]) card.appendChild(renderDetails(p));
+      list.appendChild(card);
+    });
+  }
+
+  function load() {
+    return fetch("/api/retailer/products").then(function (r) {
+      if (r.status === 401) { showSignIn("Please sign in to view the dashboard."); return null; }
+      if (!r.ok) throw new Error("bad status");
+      return r.json();
+    }).then(function (d) {
+      if (!d) return;
+      data = d;
+      $("signin").hidden = true; $("main").hidden = false; $("status").textContent = "";
+      render();
+    });
+  }
+  function loadTop() {
+    load().catch(function () { $("status").textContent = "Could not load the dashboard."; });
+  }
+
+  $("form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    fetch("/api/retailer/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: $("user").value, password: $("pass").value })
+    }).then(function (r) {
+      if (r.ok) { loadTop(); } else { $("status").textContent = "Sign-in failed. Check the username and password."; }
+    }).catch(function () { $("status").textContent = "Sign-in failed."; });
+  });
+
+  loadTop();
+})();
+</script>
+</body>
+</html>

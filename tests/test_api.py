@@ -12,6 +12,7 @@ REPO = Path(__file__).resolve().parent.parent
 REAL_LOG = REPO / "data" / "audit_log.jsonl"
 DEMO = {"username": "regulator", "password": "demo-regulator"}
 BAD = {"username": "regulator", "password": "wrong"}
+RETAILER = {"username": "retailer", "password": "demo-retailer"}
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -39,8 +40,16 @@ def env(tmp_path):
 
 
 @pytest.fixture
-def client(env):
+def anon_client(env):
+    """No cookies at all."""
     return TestClient(create_app(env))
+
+
+@pytest.fixture
+def client(anon_client):
+    """Signed in as the retailer, which POST /api/run requires. Not signed in as regulator."""
+    assert anon_client.post("/api/retailer/login", json=RETAILER).status_code == 200
+    return anon_client
 
 
 def entries(env, event_type=None):
@@ -59,6 +68,26 @@ def test_run_returns_contradicted_with_both_checks_failing(client):
     claim = r.json()["claims"][0]
     assert claim["verdict"]["verdict"] == "Contradicted"
     assert claim["verdict"]["checks"] == ["origin_match: fail", "cert_validity: fail"]
+
+
+def test_run_requires_retailer_login(anon_client, env):
+    assert anon_client.post("/api/run/tshirt-001").status_code == 401
+    assert not env.log_path.exists() and not env.runs_dir.exists()  # nothing ran
+
+
+def test_run_rejects_regulator_cookie(anon_client):
+    assert anon_client.post("/api/regulator/login", json=DEMO).status_code == 200
+    assert anon_client.post("/api/run/tshirt-001").status_code == 401
+
+
+def test_run_rejects_tampered_retailer_cookie(anon_client):
+    anon_client.cookies.set("retailer_session", "9999999999.deadbeef")
+    assert anon_client.post("/api/run/tshirt-001").status_code == 401
+
+
+def test_run_allowed_with_retailer_cookie(anon_client):
+    assert anon_client.post("/api/retailer/login", json=RETAILER).status_code == 200
+    assert anon_client.post("/api/run/tshirt-001").status_code == 200
 
 
 def test_facts_include_bangladesh_quote_and_source_file(client):
@@ -93,7 +122,8 @@ def test_public_status_label_for_contradicted(client):
     assert claim["status_label"] == "This claim is under review"
 
 
-def test_public_before_any_run_is_404(client):
+def test_public_before_any_run_is_404(anon_client):
+    client = anon_client
     r = client.get("/api/public/tshirt-001")
     assert r.status_code == 404 and "Not yet verified" in r.json()["detail"]
 

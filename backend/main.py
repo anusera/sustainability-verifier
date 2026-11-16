@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict
 from . import audit
 from .audit import DEFAULT_DOCS_DIR, DEFAULT_LOG_PATH
 from .extract import DEFAULT_MOCK_DIR
+from .retailer import build_retailer_overview
 from .pipeline import (
     DEFAULT_PRODUCTS_PATH,
     DEFAULT_RUNS_DIR,
@@ -35,6 +36,7 @@ NOT_FOUND_HTML = (
 )
 
 COOKIE_NAME = "regulator_session"
+RETAILER_COOKIE = "retailer_session"
 SESSION_TTL_SECONDS = 8 * 3600
 
 # Public wording (SPEC 7). Fixed constants: the public view is built from these, never from evidence.
@@ -64,6 +66,11 @@ class Settings:
     demo_password: str = field(default_factory=lambda: os.environ.get("REGULATOR_DEMO_PASSWORD", "demo-regulator"))
     session_secret: str = field(
         default_factory=lambda: os.environ.get("REGULATOR_SESSION_SECRET") or secrets.token_hex(32))
+    # DEMO ONLY: fixed retailer account with its own cookie and secret, so a regulator cookie never unlocks it.
+    retailer_user: str = field(default_factory=lambda: os.environ.get("RETAILER_DEMO_USER", "retailer"))
+    retailer_password: str = field(default_factory=lambda: os.environ.get("RETAILER_DEMO_PASSWORD", "demo-retailer"))
+    retailer_secret: str = field(
+        default_factory=lambda: os.environ.get("RETAILER_SESSION_SECRET") or secrets.token_hex(32))
 
 
 class LoginBody(BaseModel):
@@ -127,6 +134,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not valid_session_token(st.session_secret, request.cookies.get(COOKIE_NAME)):
             raise HTTPException(status_code=401, detail="Regulator sign-in required")
 
+    def require_retailer(request: Request) -> None:
+        if not valid_session_token(st.retailer_secret, request.cookies.get(RETAILER_COOKIE)):
+            raise HTTPException(status_code=401, detail="Retailer sign-in required")
+
     def product_or_404(product_id: str) -> dict:
         try:
             return get_product(product_id, products_path=st.products_path)
@@ -141,7 +152,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 detail=f"Not yet verified; run POST /api/run/{product_id} first")
         return run
 
-    @app.post("/api/run/{product_id}")
+    @app.post("/api/run/{product_id}", dependencies=[Depends(require_retailer)])
     def run(product_id: str) -> RunResult:
         product_or_404(product_id)
         return run_product(
@@ -152,6 +163,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def products() -> list[dict]:
         return [{"product_id": pid, "name": p["name"]}
                 for pid, p in load_products(st.products_path).items()]
+
+    @app.post("/api/retailer/login")
+    def retailer_login(body: LoginBody, response: Response) -> dict:
+        ok_user = hmac.compare_digest(body.username.encode(), st.retailer_user.encode())
+        ok_pass = hmac.compare_digest(body.password.encode(), st.retailer_password.encode())
+        if not (ok_user and ok_pass):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        response.set_cookie(RETAILER_COOKIE, make_session_token(st.retailer_secret), max_age=SESSION_TTL_SECONDS,
+                            httponly=True, samesite="lax", secure=False)
+        return {"signed_in": True}
+
+    @app.get("/api/retailer/products", dependencies=[Depends(require_retailer)])
+    def retailer_products() -> dict:
+        products = load_products(st.products_path)
+        snapshots = {pid: load_snapshot(pid, st.runs_dir) for pid in products}
+        return build_retailer_overview(products, snapshots)
 
     @app.get("/api/public/{product_id}")
     def public(product_id: str) -> PublicView:
@@ -223,6 +250,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/", response_class=HTMLResponse)
     def home() -> HTMLResponse:
         return page("index.html")
+
+    @app.get("/dashboard", response_class=HTMLResponse)
+    def dashboard_page() -> HTMLResponse:
+        # The HTML is not gated; the data behind /api/retailer is.
+        return page("dashboard.html")
 
     @app.get("/p/{product_id}", response_class=HTMLResponse)
     def shopper_page(product_id: str) -> HTMLResponse:
