@@ -37,12 +37,12 @@ data/documents/{tshirt_bom,tier1_declaration,tier2_gots_certificate,tier3_ginnin
 data/mock_extractions/   # one JSON per document, same base names
 data/answer_key.json
 data/audit_log.jsonl     # created at runtime
-backend/{models,timeutil,extract,rules,verdict,audit,passport,main}.py   # timeutil: shared utc_now_iso()
+backend/{models,timeutil,extract,rules,verdict,reason,audit,passport,main}.py   # timeutil: shared utc_now_iso(); reason: Claude explains a finished verdict, code validates it
 .gitattributes           # "data/documents/* -text": documents are hashed byte-exact, Git never rewrites line endings
 frontend/{shopper,regulator}.html
 tests/test_slice.py
 ```
-Skip for now: reason.py, carbon.py, auth.py, retailer dashboard. Regulator "sign in" is a hard-coded button for now.
+Skip for now: carbon.py, auth.py, retailer dashboard. Regulator "sign in" is a hard-coded button for now.
 
 ## Tech
 Python 3.11+, FastAPI, uvicorn, pydantic, pandas, pdfplumber, reportlab, qrcode[pil], python-dotenv, anthropic, pytest.

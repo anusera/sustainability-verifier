@@ -134,7 +134,8 @@ Priority: **M** = must (slice 1), **S** = should (full demo), **C** = could.
  "reason": "", "checks": ["origin_match: fail"], "evidence": ["fact ids"],
  "reviewed_by_human": false, "generated_at": "", "rules_version": "rules-v1.0"}
 ```
-In slice 1, `reason` is a template filled from check details. From the Claude increment, Claude writes it from the same inputs and cites fact ids.
+In slice 1, `reason` is a template filled from check details. From increment 2 (`backend/reason.py`), in real mode Claude explains the finished verdict from the same inputs and cites fact ids; code accepts the text only if it passes validation, otherwise the template is kept.
+Two optional fields record this: `reason_source` (`"claude"` or `"template"`, default `"template"`) and `cited_fact_ids` (default `[]`). The public view never receives them.
 
 ### 6.4 Product (`products.json`, keyed by product id)
 Holds name, claims (`claim_id`, `type`, `text`, `claimed_origin` or other claim parameters), documents list, and supplier tiers with parent links.
@@ -195,7 +196,7 @@ One JSON object per line in `data/audit_log.jsonl`.
 | entry_id | Integer, increasing |
 | timestamp | UTC ISO 8601 |
 | product_id | |
-| event_type | `document_ingested`, `facts_extracted`, `rules_run`, `verdict_changed`, `human_review`, `passport_published`, `regulator_access` |
+| event_type | `document_ingested`, `facts_extracted`, `rules_run`, `verdict_changed`, `human_review`, `passport_published`, `regulator_access`, `reason_generated` (real mode only; one per claim per run, details: claim_id, source, model, cached, prompt_version, cited_fact_ids, rejected_reason, reason_sha256) |
 | actor | `system`, a user name, or `regulator` |
 | details | Object, short and event-specific |
 | document_sha256 | For ingestion events, otherwise null |
@@ -237,7 +238,7 @@ Implementation notes: `backend/audit.py` and `backend/verdict.py` share `backend
 | Task | Input | Output |
 |---|---|---|
 | Extraction | One document | JSON list of Facts with verbatim `source_quote`; null where not stated |
-| Reasoning | Claim plus all facts for the product | JSON: contradictions, vague wording, gaps, verdict reason citing fact ids |
+| Reasoning | Claim plus all facts for the product | JSON: contradictions, vague wording, gaps, verdict reason citing fact ids. Increment 2 builds the verdict-reason part only: input is the finished verdict, `{"explanation", "cited_fact_ids"}` is validated in code |
 | Factor selection | Ingredient description | Which emission factor key applies, with a short rationale. Code multiplies |
 | Email drafting | Missing-evidence gap | Editable email text |
 

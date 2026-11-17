@@ -21,7 +21,7 @@ DEFAULT_DOCS_DIR = _ROOT / "data" / "documents"
 GENESIS_HASH = "0" * 64
 EVENT_TYPES = {
     "document_ingested", "facts_extracted", "rules_run", "verdict_changed",
-    "human_review", "passport_published", "regulator_access",
+    "human_review", "passport_published", "regulator_access", "reason_generated",
 }
 
 _EVENT_DEFAULTS = {

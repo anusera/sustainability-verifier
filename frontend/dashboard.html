@@ -86,6 +86,8 @@
     p.claims.forEach(function (c) {
       box.appendChild(el("h3", "", c.claim_id + ": " + c.claim_text));
       box.appendChild(el("p", "", c.reason ? c.reason : "Not yet verified. Run verification to see a reason."));
+      if (c.reason) box.appendChild(el("p", "muted", c.reason_source === "claude"
+        ? "Explained by Claude and checked by code" : "Template"));
       var ul = el("ul");
       c.checks.forEach(function (k) {
         var li = el("li");

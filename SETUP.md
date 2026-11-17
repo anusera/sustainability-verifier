@@ -28,4 +28,16 @@ and is recorded in the audit log's `model` field for real runs.
   diff for every document in `products.json`, and lists documents that yielded no accepted facts.
   It never prints the key.
 
+## Claude-written verdict reasons
+
+Code decides the verdict; with `MOCK_MODE=false`, Claude then explains it in 2 to 4 sentences and code accepts the text only
+if it passes validation (cited fact ids, dates, numbers, countries, quotes, verdict label). Otherwise the template reason is
+used and the refusal is recorded. Mock mode never calls the API.
+
+- **Cache:** `data/reason_cache/` (git-ignored). `REASON_CACHE=off` bypasses it (`EXTRACTION_CACHE` does not).
+- **Audit:** real runs write one `reason_generated` event per claim (source, cited ids, rejection reason, reason hash).
+- **Compare side by side:** `python scripts/compare_reasons.py [--product ID] [--no-cache]` (about one API call per claim;
+  never writes the audit log).
+- The public API and shopper page never receive the explanation.
+
 `httpx` is in requirements.txt because FastAPI's TestClient needs it.

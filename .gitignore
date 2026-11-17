@@ -6,6 +6,7 @@ __pycache__/
 data/audit_log.jsonl
 data/runs/
 data/extraction_cache/
+data/reason_cache/
 .DS_Store
 Thumbs.db
 *.pyc

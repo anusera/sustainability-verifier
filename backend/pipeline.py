@@ -2,6 +2,7 @@
 
 All paths are injectable so tests can run entirely inside tmp_path.
 """
+import hashlib
 import json
 from datetime import date, datetime
 from pathlib import Path
@@ -22,6 +23,7 @@ from .extract import (
     extract_facts,
 )
 from .models import Check, Fact, Verdict
+from .reason import explain_verdict
 from .rules import claim_type, run_rules
 from .timeutil import utc_now_iso
 from .verdict import decide_verdict
@@ -208,6 +210,19 @@ def run_product(
         }, log_path=log_path)
         verdict = decide_verdict(product_id, claim["claim_id"], checks, facts, product["supply_chain"], now,
                                   claim_type=ctype)
+        info = explain_verdict(verdict, claim, checks, facts)
+        verdict = verdict.model_copy(update={"reason": info.reason, "reason_source": info.source,
+                                             "cited_fact_ids": info.cited_fact_ids})
+        if run_model != "mock":  # real runs only: mock log entries stay byte-identical
+            audit.append({
+                "product_id": product_id,
+                "event_type": "reason_generated",
+                "details": {"claim_id": claim["claim_id"], "source": info.source, "model": info.model,
+                            "cached": info.cached, "prompt_version": info.prompt_version,
+                            "cited_fact_ids": info.cited_fact_ids, "rejected_reason": info.rejected_reason,
+                            "reason_sha256": hashlib.sha256(info.reason.encode("utf-8")).hexdigest()},
+                "model": run_model,
+            }, log_path=log_path)
         previous = previous_verdict_label(product_id, claim["claim_id"], log_path=log_path)
         changed = previous != verdict.verdict
         if changed:

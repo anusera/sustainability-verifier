@@ -92,6 +92,8 @@
       var p = el("p"); p.appendChild(el("strong", "", "Verdict: " + c.verdict.verdict));
       sec.appendChild(p);
       sec.appendChild(el("p", "", c.verdict.reason));
+      sec.appendChild(el("p", "muted", c.verdict.reason_source === "claude"
+        ? "Explained by Claude and checked by code" : "Template"));
       sec.appendChild(el("p", "muted", "Generated " + val(c.verdict.generated_at) + " | " + val(c.verdict.rules_version)));
       var ul = el("ul");
       c.checks.forEach(function (ck) {
@@ -146,7 +148,7 @@
       var self = e.event_type === "regulator_access" ? " (viewer access)" : "";
       var li = el("li");
       li.appendChild(el("strong", "", e.timestamp + " - " + e.event_type + self));
-      li.appendChild(document.createTextNode(" by " + e.actor + " "));
+      li.appendChild(document.createTextNode(" by " + e.actor + " | model: " + e.model + " | " + e.rules_version + " "));
       li.appendChild(el("span", "mono muted", JSON.stringify(e.details)));
       h.appendChild(li);
     });

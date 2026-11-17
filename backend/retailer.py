@@ -49,7 +49,8 @@ def build_retailer_overview(products: dict, snapshots: dict[str, RunResult | Non
             for c in product["claims"]:
                 counts["not_yet_verified"] += 1
                 claims.append({"claim_id": c["claim_id"], "claim_text": c["text"], "verdict": None,
-                               "badge": "none", "label": NOT_VERIFIED_LABEL, "reason": None, "checks": []})
+                               "badge": "none", "label": NOT_VERIFIED_LABEL, "reason": None,
+                               "reason_source": None, "checks": []})
         else:
             for c in run.claims:
                 v = c.verdict.verdict
@@ -57,6 +58,7 @@ def build_retailer_overview(products: dict, snapshots: dict[str, RunResult | Non
                 claims.append({
                     "claim_id": c.claim_id, "claim_text": c.claim_text, "verdict": v,
                     "badge": BADGE[v], "label": v, "reason": c.verdict.reason,
+                    "reason_source": c.verdict.reason_source,
                     "checks": [{"check_id": k.check_id, "result": k.result, "detail": k.detail}
                                for k in c.checks]})
         out.append({

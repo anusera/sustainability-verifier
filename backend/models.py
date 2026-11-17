@@ -46,3 +46,6 @@ class Verdict(BaseModel):
     reviewed_by_human: bool = False
     generated_at: str  # ISO timestamp
     rules_version: str = RULES_VERSION
+    # Who wrote `reason`: the code template, or Claude (accepted only after code validation, see reason.py).
+    reason_source: Literal["claude", "template"] = "template"
+    cited_fact_ids: list[str] = Field(default_factory=list)

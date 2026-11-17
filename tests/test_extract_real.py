@@ -26,6 +26,7 @@ from backend.main import Settings, create_app
 from backend.models import Fact
 from tests.conftest import DATA
 
+REPO_FRONTEND = DATA.parent / "frontend"
 FAKE_KEY = "sk-test-SECRET"
 TODAY = date(2026, 11, 16)
 NOW = datetime(2026, 11, 16, 12, 0, tzinfo=timezone.utc)
@@ -537,6 +538,28 @@ def test_documents_without_facts_reports_empty_answer_and_all_rejected(env, monk
     assert found["tier2_gots_certificate"].rejected == 2
     assert result.failed_documents == []  # read successfully, so not a failure
     assert len(result.rejected) == 2
+
+
+def test_regulator_history_includes_model_and_rules_version_for_each_entry(env, monkeypatch):
+    monkeypatch.setenv("MOCK_MODE", "true")
+    settings = Settings(log_path=env.log, docs_dir=env.docs, mock_dir=env.mock, products_path=env.products,
+                        runs_dir=env.runs, session_secret="test-secret")
+    client = TestClient(create_app(settings))
+    assert client.post("/api/retailer/login", json={"username": "retailer", "password": "demo-retailer"}).status_code == 200
+    assert client.post("/api/run/tshirt-001").status_code == 200
+    assert client.post("/api/regulator/login", json={"username": "regulator", "password": "demo-regulator"}).status_code == 200
+    client.get("/api/regulator/tshirt-001")  # first view logs a regulator_access entry
+    history = client.get("/api/regulator/tshirt-001").json()["history"]
+    assert {e["event_type"] for e in history} >= {"document_ingested", "facts_extracted", "rules_run",
+                                                   "verdict_changed", "regulator_access"}
+    for e in history:
+        assert e["model"] == "mock" and e["rules_version"] == "rules-v1.0"
+
+
+def test_regulator_page_shows_model_and_rules_version_via_text_nodes_only():
+    text = (REPO_FRONTEND / "regulator.html").read_text(encoding="utf-8")
+    assert '" | model: " + e.model + " | " + e.rules_version' in text
+    assert "innerHTML" not in text
 
 
 def test_regulator_api_returns_documents_without_facts(env, monkeypatch):

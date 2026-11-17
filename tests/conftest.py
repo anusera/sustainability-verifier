@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from backend import extract
+from backend import extract, reason
 from backend.models import Fact
 
 DATA = Path(__file__).resolve().parent.parent / "data"
@@ -28,6 +28,8 @@ def _lock_down(mp: pytest.MonkeyPatch) -> None:
     mp.delenv("ANTHROPIC_API_KEY", raising=False)
     mp.setenv("EXTRACTION_CACHE", "off")
     mp.setattr(extract, "_make_client", _forbid_client)
+    mp.setattr(reason, "_make_client", _forbid_client)
+    mp.setenv("REASON_CACHE", "off")
 
 
 @pytest.fixture(scope="session", autouse=True)
