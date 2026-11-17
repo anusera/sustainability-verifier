@@ -11,7 +11,16 @@ from pydantic import BaseModel
 
 from . import audit
 from .audit import DEFAULT_DOCS_DIR, DEFAULT_LOG_PATH, read_entries, sha256_file
-from .extract import DEFAULT_MOCK_DIR, ExtractionResult, RejectedFact, extract_facts
+from .extract import (
+    DEFAULT_MOCK_DIR,
+    PROMPT_VERSION,
+    DocContext,
+    ExtractionError,
+    ExtractionResult,
+    RejectedFact,
+    active_model,
+    extract_facts,
+)
 from .models import Check, Fact, Verdict
 from .rules import claim_type, run_rules
 from .timeutil import utc_now_iso
@@ -33,6 +42,13 @@ class FailedDocument(BaseModel):
     doc_id: str
     file: str
     reason: str
+
+
+class DocumentWithoutFacts(BaseModel):
+    """A document that was read but yielded no accepted facts (empty answer, or every fact rejected)."""
+    doc_id: str
+    file: str
+    rejected: int
 
 
 class SupplierNode(BaseModel):
@@ -59,6 +75,7 @@ class RunResult(BaseModel):
     facts: list[Fact]
     rejected: list[RejectedFact]
     failed_documents: list[FailedDocument]
+    documents_without_facts: list[DocumentWithoutFacts] = []
     claims: list[ClaimResult]
     tree: SupplierNode
 
@@ -140,6 +157,8 @@ def run_product(
     facts: list[Fact] = []
     rejected: list[RejectedFact] = []
     failed: list[FailedDocument] = []
+    without_facts: list[DocumentWithoutFacts] = []
+    run_model = active_model()  # "mock", or the extraction model in effect for this run
 
     for doc in product["documents"]:
         path = docs_dir / doc["file"]
@@ -147,23 +166,34 @@ def run_product(
             failed.append(FailedDocument(doc_id=doc["doc_id"], file=doc["file"], reason="document file not found"))
             continue
         if sha256_file(path) != _last_logged_hash(product_id, path.name, log_path=log_path):
-            audit.log_document_ingested(product_id, path, log_path=log_path)
+            audit.log_document_ingested(product_id, path, log_path=log_path, model=run_model)
+        # Always pass the context: real extraction must not fall back to the default products.json.
+        context = DocContext(product_id=product_id, product_name=product["name"], doc_id=doc["doc_id"],
+                             tier=doc["tier"], supply_chain=product["supply_chain"])
         try:
-            result: ExtractionResult = extract_facts(path, mock_dir=mock_dir)
-        except (FileNotFoundError, ValueError, UnicodeDecodeError, NotImplementedError) as exc:
+            result: ExtractionResult = extract_facts(path, mock_dir=mock_dir, context=context)
+        except (FileNotFoundError, ValueError, UnicodeDecodeError, ExtractionError) as exc:
             failed.append(FailedDocument(doc_id=doc["doc_id"], file=doc["file"], reason=str(exc)))
             continue
         facts += result.accepted
         rejected += result.rejected
+        if not result.accepted:
+            without_facts.append(DocumentWithoutFacts(
+                doc_id=doc["doc_id"], file=doc["file"], rejected=len(result.rejected)))
+        details = {
+            "doc_id": result.doc_id,
+            "accepted": len(result.accepted),
+            "rejected": len(result.rejected),
+            "fact_ids": [f.fact_id for f in result.accepted],
+        }
+        if result.model != "mock":  # real runs only: mock log entries stay byte-identical
+            details["cached"] = result.cached
+            details["prompt_version"] = PROMPT_VERSION
         audit.append({
             "product_id": product_id,
             "event_type": "facts_extracted",
-            "details": {
-                "doc_id": result.doc_id,
-                "accepted": len(result.accepted),
-                "rejected": len(result.rejected),
-                "fact_ids": [f.fact_id for f in result.accepted],
-            },
+            "details": details,
+            "model": result.model,
         }, log_path=log_path)
 
     claim_results: list[ClaimResult] = []
@@ -174,6 +204,7 @@ def run_product(
             "product_id": product_id,
             "event_type": "rules_run",
             "details": {"claim_id": claim["claim_id"], "checks": [f"{c.check_id}: {c.result}" for c in checks]},
+            "model": run_model,
         }, log_path=log_path)
         verdict = decide_verdict(product_id, claim["claim_id"], checks, facts, product["supply_chain"], now,
                                   claim_type=ctype)
@@ -185,6 +216,7 @@ def run_product(
                 "event_type": "verdict_changed",
                 "details": {"claim_id": claim["claim_id"], "previous": previous,
                             "verdict": verdict.verdict, "reason": verdict.reason},
+                "model": run_model,
             }, log_path=log_path)
         claim_results.append(ClaimResult(claim_id=claim["claim_id"], claim_text=claim["text"],
                                          checks=checks, verdict=verdict, verdict_changed=changed))
@@ -196,6 +228,7 @@ def run_product(
         facts=facts,
         rejected=rejected,
         failed_documents=failed,
+        documents_without_facts=without_facts,
         claims=claim_results,
         tree=build_tree(product, facts),
     )

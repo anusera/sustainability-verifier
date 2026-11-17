@@ -13,6 +13,19 @@ Run tests:   `pytest`
 Run server:  `uvicorn backend.main:app --reload`
 
 Extraction runs in MOCK_MODE by default (reads `data/mock_extractions/`).
-Later, put `ANTHROPIC_API_KEY` in a `.env` file and set `MOCK_MODE=false`.
+
+## Real extraction (Claude)
+
+Put `ANTHROPIC_API_KEY=...` in `.env` (git-ignored) and set `MOCK_MODE=false`. The model is `claude-sonnet-5-5`
+and is recorded in the audit log's `model` field for real runs.
+
+- **Cache:** real results are cached in `data/extraction_cache/` (git-ignored), keyed by document SHA-256, prompt
+  version and model, so repeated runs cost nothing. Set `EXTRACTION_CACHE=off` to bypass it. Facts are validated again
+  on every cache read.
+- **Plain `pytest` never calls the API.** All unit tests use a fake client. The live test needs both a key and
+  `RUN_LIVE_EXTRACTION=1`: `$env:RUN_LIVE_EXTRACTION=1; pytest tests/test_extract_live.py` (spends money).
+- **Compare real vs mock:** `python scripts/compare_extraction.py [--doc STEM] [--no-cache]` prints a field-by-field
+  diff for every document in `products.json`, and lists documents that yielded no accepted facts.
+  It never prints the key.
 
 `httpx` is in requirements.txt because FastAPI's TestClient needs it.

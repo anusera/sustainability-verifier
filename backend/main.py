@@ -218,6 +218,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "facts": [f.model_dump() for f in run.facts],
             "rejected": [r.model_dump() for r in run.rejected],
             "failed_documents": [d.model_dump() for d in run.failed_documents],
+            "documents_without_facts": [d.model_dump() for d in run.documents_without_facts],
             "documents": list(documents.values()),
             "history": entries,
         }

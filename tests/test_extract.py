@@ -1,10 +1,12 @@
 import json
 import shutil
 
+import anthropic
 import pytest
 
 from backend.extract import (
     DEFAULT_MOCK_DIR,
+    ExtractionError,
     MockExtractionMissing,
     extract_facts,
     validate_quotes,
@@ -75,13 +77,21 @@ def test_other_facts_still_accepted_when_one_rejected(tmp_path):
     assert [r.fact.fact_id for r in result.rejected] == ["f-bom-1"]
 
 
-def test_crlf_normalised_but_case_and_spacing_are_not(facts):
+def test_crlf_and_whitespace_normalised_but_case_is_not(facts):
     fact = next(f for f in facts if f.fact_id == "f-t3-1")
-    text = doc("tier3_ginning_invoice").read_bytes().decode("utf-8").replace("\n", "\r\n")
-    assert validate_quotes([fact], text) == ([fact], [])
-    for bad in ("country of origin: bangladesh", "Country of  origin: Bangladesh"):
+    lf_text = doc("tier3_ginning_invoice").read_bytes().decode("utf-8")
+    crlf_text = lf_text.replace("\n", "\r\n")
+    assert validate_quotes([fact], crlf_text) == ([fact], [])
+    # Whitespace runs (spaces, tabs, line breaks) are collapsed; the stored quote is the exact document span.
+    for loose in ("Country  of   origin: Bangladesh", "Country of\norigin:\tBangladesh"):
+        altered = fact.model_copy(update={"source_quote": loose})
+        accepted, rejected = validate_quotes([altered], lf_text)
+        assert rejected == []
+        assert accepted[0].source_quote == "Country of origin: Bangladesh"
+    # Nothing looser: case, missing spaces and extra characters still fail.
+    for bad in ("country of origin: bangladesh", "Country of origin:Bangladesh", "Country of origin: Bangladesh."):
         altered = fact.model_copy(update={"source_quote": bad})
-        accepted, rejected = validate_quotes([altered], text)
+        accepted, rejected = validate_quotes([altered], lf_text)
         assert accepted == [] and len(rejected) == 1
 
 
@@ -103,10 +113,15 @@ def test_doc_id_mismatch_raises(tmp_path):
 
 
 @pytest.mark.parametrize("value", ["false", "False", "0", "no"])
-def test_mock_mode_false_not_implemented(monkeypatch, value):
+def test_real_mode_without_key_raises_clear_error(monkeypatch, real_make_client, value):
     monkeypatch.setenv("MOCK_MODE", value)
-    with pytest.raises(NotImplementedError, match="real extraction arrives in increment 1"):
+    monkeypatch.setenv("EXTRACTION_CACHE", "off")  # a cached result would make the key unnecessary
+    built = []
+    monkeypatch.setattr(anthropic, "Anthropic", lambda *a, **k: built.append((a, k)))
+    with pytest.raises(ExtractionError) as excinfo:
         extract_facts(doc("tshirt_bom"))
+    assert "ANTHROPIC_API_KEY" in str(excinfo.value) and "tshirt_bom.txt" in str(excinfo.value)
+    assert built == []  # no client was constructed, so no network
 
 
 def test_mock_mode_true_explicit(monkeypatch):

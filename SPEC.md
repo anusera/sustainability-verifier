@@ -199,7 +199,7 @@ One JSON object per line in `data/audit_log.jsonl`.
 | actor | `system`, a user name, or `regulator` |
 | details | Object, short and event-specific |
 | document_sha256 | For ingestion events, otherwise null |
-| model | `mock` or the model name |
+| model | `mock` or the model name. Records the extraction model in effect for the run. |
 | rules_version | |
 | prev_hash | 64 zeros for the first entry |
 | entry_hash | SHA-256 over all other fields in canonical JSON (sorted keys, no whitespace) |
