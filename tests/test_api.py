@@ -223,4 +223,5 @@ def test_products_list(client):
         {"product_id": "tshirt-001", "name": "Everyday Organic Tee"},
         {"product_id": "bottle-001", "name": "Spring Water 500ml"},
         {"product_id": "bottle-eco-001", "name": "Spring Water 330ml"},
+        {"product_id": "shirt-001", "name": "Organic Poplin Shirt"},
     ]

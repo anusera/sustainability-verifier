@@ -56,5 +56,28 @@
     "supply_chain": [
       {"tier": 1, "supplier": "Clearbrook Bottling Co."}
     ]
+  },
+  "shirt-001": {
+    "product_id": "shirt-001",
+    "name": "Organic Poplin Shirt",
+    "claims": [
+      {
+        "claim_id": "c1",
+        "type": "origin",
+        "text": "Organic cotton from India",
+        "claimed_origin": "India"
+      }
+    ],
+    "documents": [
+      {"doc_id": "shirt_bom", "tier": 1, "file": "shirt_bom.txt"},
+      {"doc_id": "shirt_declaration", "tier": 1, "file": "shirt_declaration.txt"},
+      {"doc_id": "shirt_organic_certificate", "tier": 2, "file": "shirt_organic_certificate.txt"},
+      {"doc_id": "shirt_ginning_invoice", "tier": 3, "file": "shirt_ginning_invoice.txt"}
+    ],
+    "supply_chain": [
+      {"tier": 1, "supplier": "Larkspur Apparel Pvt Ltd"},
+      {"tier": 2, "supplier": "Meridian Weaving Mills Ltd"},
+      {"tier": 3, "supplier": "Harvest Moon Ginning Co."}
+    ]
   }
 }

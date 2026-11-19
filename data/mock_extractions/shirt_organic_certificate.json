@@ -1,0 +1,21 @@
+{
+  "doc_id": "shirt_organic_certificate",
+  "facts": [
+    {
+      "fact_id": "f-sh2-1",
+      "doc_id": "shirt_organic_certificate",
+      "supplier": "Meridian Weaving Mills Ltd",
+      "tier": 2,
+      "material": "Organic cotton yarn and fabric",
+      "certification_body": "Organic Textile Standard Certification (demo certifier)",
+      "certificate_id": "OTX-DEMO-61407",
+      "valid_from": "2025-02-01",
+      "valid_to": "2030-01-31",
+      "document_date": null,
+      "source_file": "shirt_organic_certificate.txt",
+      "source_page": 1,
+      "source_quote": "Valid from:           01 February 2025\nValid to:             31 January 2030",
+      "confidence": 0.95
+    }
+  ]
+}

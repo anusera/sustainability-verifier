@@ -64,5 +64,15 @@
         ]
       }
     }
+  },
+  "shirt-001": {
+    "claims": {
+      "c1": {
+        "claim_text": "Organic cotton from India",
+        "expected_verdict": "Verified",
+        "expected_failing_checks": [],
+        "planted_flaws": []
+      }
+    }
   }
 }

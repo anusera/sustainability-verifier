@@ -1,0 +1,31 @@
+{
+  "doc_id": "shirt_bom",
+  "facts": [
+    {
+      "fact_id": "f-sh-bom-1",
+      "doc_id": "shirt_bom",
+      "supplier": "Larkspur Apparel Pvt Ltd",
+      "tier": 1,
+      "material": "Organic cotton poplin (fabric)",
+      "weight_kg": 0.22,
+      "document_date": "2026-09-10",
+      "source_file": "shirt_bom.txt",
+      "source_page": 1,
+      "source_quote": "Fabric           Organic cotton poplin     0.22          Meridian Weaving Mills Ltd",
+      "confidence": 0.95
+    },
+    {
+      "fact_id": "f-sh-bom-2",
+      "doc_id": "shirt_bom",
+      "supplier": "Larkspur Apparel Pvt Ltd",
+      "tier": 1,
+      "material": "Organic cotton sewing thread",
+      "weight_kg": 0.01,
+      "document_date": "2026-09-10",
+      "source_file": "shirt_bom.txt",
+      "source_page": 1,
+      "source_quote": "Thread           Organic cotton sewing thread  0.01      Meridian Weaving Mills Ltd",
+      "confidence": 0.95
+    }
+  ]
+}

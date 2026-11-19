@@ -1,0 +1,17 @@
+LARKSPUR APPAREL PVT LTD
+BILL OF MATERIALS
+
+Product:        Organic Poplin Shirt (product id: shirt-001)
+BOM date:       10 September 2026
+Prepared by:    Larkspur Apparel Pvt Ltd, Panipat (Tier 1)
+Ref:   LA/BOM/0910
+
+Component        Material                  Weight (kg)   Supplied by
+---------------  ------------------------  ------------  ---------------------------
+Fabric           Organic cotton poplin     0.22          Meridian Weaving Mills Ltd
+Thread           Organic cotton sewing thread  0.01      Meridian Weaving Mills Ltd
+
+Total garment weight: 0.23 kg
+
+Supply chain:
+  Larkspur Apparel Pvt Ltd  >  Meridian Weaving Mills Ltd  >  Harvest Moon Ginning Co.

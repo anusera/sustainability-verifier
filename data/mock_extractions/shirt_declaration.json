@@ -1,0 +1,18 @@
+{
+  "doc_id": "shirt_declaration",
+  "facts": [
+    {
+      "fact_id": "f-sh1-1",
+      "doc_id": "shirt_declaration",
+      "supplier": "Larkspur Apparel Pvt Ltd",
+      "tier": 1,
+      "material": "Organic cotton",
+      "origin_country": "India",
+      "document_date": "2026-10-05",
+      "source_file": "shirt_declaration.txt",
+      "source_page": 1,
+      "source_quote": "the organic cotton used in the\nOrganic Poplin Shirt (product id: shirt-001) is sourced in India.",
+      "confidence": 0.9
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "doc_id": "shirt_ginning_invoice",
+  "facts": [
+    {
+      "fact_id": "f-sh3-1",
+      "doc_id": "shirt_ginning_invoice",
+      "supplier": "Harvest Moon Ginning Co.",
+      "tier": 3,
+      "material": "Raw organic cotton lint",
+      "origin_country": "India",
+      "weight_kg": 15000,
+      "document_date": "2026-08-18",
+      "source_file": "shirt_ginning_invoice.txt",
+      "source_page": 1,
+      "source_quote": "Country of origin: India",
+      "confidence": 0.97
+    }
+  ]
+}
