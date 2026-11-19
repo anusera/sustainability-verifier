@@ -28,7 +28,7 @@ _EVENT_DEFAULTS = {
     "actor": "system",
     "details": None,  # replaced with a fresh {} per entry
     "document_sha256": None,
-    "model": "mock",
+    "model": "n/a",  # "model" is the model that produced the entry's content, or "n/a" when none was involved
     "rules_version": RULES_VERSION,
 }
 _REQUIRED = {"product_id", "event_type"}
@@ -80,6 +80,10 @@ def append(event: dict, *, log_path: Path = DEFAULT_LOG_PATH, timestamp: str | N
         raise ValueError(f"event has keys that append() sets or does not allow: {sorted(unknown)}")
     if event["event_type"] not in EVENT_TYPES:
         raise ValueError(f"unknown event_type: {event['event_type']!r}")
+    if event["event_type"] == "facts_extracted":
+        model = event.get("model")
+        if not isinstance(model, str) or not model.strip():
+            raise ValueError("facts_extracted requires a model (the extraction model, or 'mock')")
 
     log_path = Path(log_path)
     with _APPEND_LOCK:
@@ -111,7 +115,7 @@ def append(event: dict, *, log_path: Path = DEFAULT_LOG_PATH, timestamp: str | N
 
 
 def log_document_ingested(product_id: str, doc_path: Path, *, log_path: Path = DEFAULT_LOG_PATH,
-                          timestamp: str | None = None, actor: str = "system", model: str = "mock") -> dict:
+                          timestamp: str | None = None, actor: str = "system") -> dict:
     doc_path = Path(doc_path)
     return append(
         {
@@ -120,7 +124,6 @@ def log_document_ingested(product_id: str, doc_path: Path, *, log_path: Path = D
             "actor": actor,
             "details": {"file_name": doc_path.name},
             "document_sha256": sha256_file(doc_path),
-            "model": model,
         },
         log_path=log_path,
         timestamp=timestamp,

@@ -148,7 +148,8 @@
       var self = e.event_type === "regulator_access" ? " (viewer access)" : "";
       var li = el("li");
       li.appendChild(el("strong", "", e.timestamp + " - " + e.event_type + self));
-      li.appendChild(document.createTextNode(" by " + e.actor + " | model: " + e.model + " | " + e.rules_version + " "));
+      var modelText = e.model === "n/a" ? "model: not applicable" : "model: " + e.model;
+      li.appendChild(el("span", "", " by " + e.actor + " | " + modelText + " | " + e.rules_version + " "));
       li.appendChild(el("span", "mono muted", JSON.stringify(e.details)));
       h.appendChild(li);
     });

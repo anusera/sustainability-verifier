@@ -66,6 +66,7 @@ In slice 1, `reason` is a template filled from check details. Claude writes it l
 ### Audit log entry (one JSON object per line)
 entry_id, timestamp, product_id, event_type, actor, details(object), document_sha256, model, rules_version,
 prev_hash (64 zeros for the first entry), entry_hash (SHA-256 of all the other fields in canonical JSON).
+`model` records the model that produced the entry's content, or `n/a`.
 Events in slice 1: document_ingested, facts_extracted, rules_run, verdict_changed, passport_published.
 Functions: append(event), verify_chain() (recompute every hash, check prev_hash links, re-hash stored documents,
 report the first broken entry).

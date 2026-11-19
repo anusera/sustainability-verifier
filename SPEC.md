@@ -200,12 +200,12 @@ One JSON object per line in `data/audit_log.jsonl`.
 | actor | `system`, a user name, or `regulator` |
 | details | Object, short and event-specific |
 | document_sha256 | For ingestion events, otherwise null |
-| model | `mock` or the model name. Records the extraction model in effect for the run. |
+| model | Records the model that produced the entry's content, or `n/a`. `facts_extracted`: the extraction model (`mock` in mock mode, the model name in real mode). `reason_generated` and `verdict_changed`: the explanation model when the stored reason came from Claude, otherwise `n/a`. All other events: `n/a`. Older entries may hold `mock` on any event; they still verify. |
 | rules_version | |
 | prev_hash | 64 zeros for the first entry |
 | entry_hash | SHA-256 over all other fields in canonical JSON (sorted keys, no whitespace) |
 
-Implementation notes: `backend/audit.py` and `backend/verdict.py` share `backend/timeutil.py` (`utc_now_iso()`, Z-suffixed UTC, seconds precision). Documents are hashed in binary mode, and `.gitattributes` (`data/documents/* -text`) stops Git rewriting their line endings. `entry_id` starts at 1. Known limits: truncating the last entries, or rewriting the whole chain with recomputed hashes, is not detected without an external anchor.
+Implementation notes: `backend/audit.py` and `backend/verdict.py` share `backend/timeutil.py` (`utc_now_iso()`, Z-suffixed UTC, seconds precision). Documents are hashed in binary mode, and `.gitattributes` (`data/documents/* -text`) stops Git rewriting their line endings. `entry_id` starts at 1. On `reason_generated`, the top-level `model` is the model that produced the stored reason (`n/a` for the template), while `details.model` is the model attempted. `facts_extracted.model` can be the API-reported model string for fresh runs and the configured model name for cached ones. `append()` requires a model for `facts_extracted` and defaults it to `n/a` for every other event. Known limits: truncating the last entries, or rewriting the whole chain with recomputed hashes, is not detected without an external anchor.
 
 `verify_chain()` returns `{"intact": true}` or `{"intact": false, "first_broken_entry": n, "reason": "..."}`. This format is fixed; changing it breaks existing chains.
 

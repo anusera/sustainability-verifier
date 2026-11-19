@@ -464,13 +464,15 @@ def log_entries(env):
     return [json.loads(line) for line in env.log.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def test_pipeline_real_run_records_model_on_every_event(env, monkeypatch):
+def test_pipeline_real_run_records_model_only_where_a_model_produced_content(env, monkeypatch):
     monkeypatch.setattr(extract, "_make_client", lambda *a, **k: MockBackedClient())
     result = run(env)
     assert result.claims[0].verdict.verdict == "Contradicted"
     assert [c.result for c in result.claims[0].checks] == ["fail", "fail"]
     entries = log_entries(env)
-    assert {e["model"] for e in entries} == {"claude-sonnet-5-5"}
+    assert {e["model"] for e in entries if e["event_type"] == "facts_extracted"} == {"claude-sonnet-5-5"}
+    # No reason client here, so the reason falls back to the template: no model produced any other entry.
+    assert {e["model"] for e in entries if e["event_type"] != "facts_extracted"} == {"n/a"}
     extracted = [e for e in entries if e["event_type"] == "facts_extracted"]
     assert len(extracted) == 4
     assert all(e["details"]["cached"] is False and e["details"]["prompt_version"] == PROMPT_VERSION for e in extracted)
@@ -492,7 +494,8 @@ def test_pipeline_mock_mode_log_unchanged(env, monkeypatch):
     monkeypatch.setenv("MOCK_MODE", "true")
     result = run(env)
     entries = log_entries(env)
-    assert {e["model"] for e in entries} == {"mock"}
+    assert {e["model"] for e in entries if e["event_type"] == "facts_extracted"} == {"mock"}
+    assert {e["model"] for e in entries if e["event_type"] != "facts_extracted"} == {"n/a"}
     for e in entries:
         if e["event_type"] == "facts_extracted":
             assert set(e["details"]) == {"doc_id", "accepted", "rejected", "fact_ids"}
@@ -553,12 +556,14 @@ def test_regulator_history_includes_model_and_rules_version_for_each_entry(env, 
     assert {e["event_type"] for e in history} >= {"document_ingested", "facts_extracted", "rules_run",
                                                    "verdict_changed", "regulator_access"}
     for e in history:
-        assert e["model"] == "mock" and e["rules_version"] == "rules-v1.0"
+        assert e["model"] == ("mock" if e["event_type"] == "facts_extracted" else "n/a")
+        assert e["rules_version"] == "rules-v1.0"
 
 
 def test_regulator_page_shows_model_and_rules_version_via_text_nodes_only():
     text = (REPO_FRONTEND / "regulator.html").read_text(encoding="utf-8")
-    assert '" | model: " + e.model + " | " + e.rules_version' in text
+    assert '"model: not applicable"' in text and 'e.model === "n/a"' in text
+    assert '"model: " + e.model' in text and "e.rules_version" in text
     assert "innerHTML" not in text
 
 

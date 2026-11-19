@@ -422,7 +422,7 @@ def test_pipeline_writes_reason_generated_and_final_reason(env, real_run, monkey
     assert rg["details"]["reason_sha256"] == hashlib.sha256(v.reason.encode("utf-8")).hexdigest()
     assert rg["details"]["prompt_version"] == reason.PROMPT_VERSION and rg["model"] == MODEL
     vc = next(e for e in log(env) if e["event_type"] == "verdict_changed")
-    assert vc["details"]["reason"] == v.reason
+    assert vc["details"]["reason"] == v.reason and vc["model"] == MODEL
     assert audit.verify_chain(env.log, env.docs) == {"intact": True}
 
 
@@ -441,6 +441,46 @@ def test_pipeline_survives_reason_failure_with_template(env, real_run, monkeypat
     assert v.reason_source == "template" and v.reason.startswith("Evidence contradicts the claim")
     rg = next(e for e in log(env) if e["event_type"] == "reason_generated")
     assert rg["details"]["source"] == "template" and rg["details"]["rejected_reason"].startswith("api_error")
+    vc = next(e for e in log(env) if e["event_type"] == "verdict_changed")
+    assert rg["model"] == "n/a" and vc["model"] == "n/a" and rg["details"]["model"] == MODEL
+
+
+def _bad_label(kwargs):
+    r = smart()(kwargs)
+    r.content[0].text = r.content[0].text.replace("is contradicted", "is Verified")
+    return r
+
+
+@pytest.mark.parametrize("output", [
+    _bad_label,
+    anthropic.APIConnectionError(request=httpx2.Request("POST", "https://api.anthropic.com/v1/messages")),
+    reply("", stop_reason="refusal"),
+    reply('{"explanation": "The claim is', stop_reason="max_tokens"),
+    "not json",
+], ids=["validation_rejection", "api_error", "refusal", "truncation", "invalid_json"])
+def test_every_fallback_logs_na_model_and_a_rejected_reason(env, real_run, monkeypatch, tmp_path, output):
+    monkeypatch.setattr(reason, "DEFAULT_REASON_CACHE_DIR", tmp_path / "reason_cache")
+    monkeypatch.setattr(reason, "_make_client", lambda: FakeClient(output))
+    v = run(env).claims[0].verdict
+    assert v.reason_source == "template"
+    rg = next(e for e in log(env) if e["event_type"] == "reason_generated")
+    vc = next(e for e in log(env) if e["event_type"] == "verdict_changed")
+    assert rg["model"] == "n/a" and vc["model"] == "n/a"
+    assert rg["details"]["source"] == "template" and rg["details"]["rejected_reason"]
+    assert rg["details"]["model"] == MODEL  # the model attempted
+
+
+def test_accepted_reason_has_same_model_at_top_level_and_in_details_fresh_and_cached(env, real_run, monkeypatch,
+                                                                                    tmp_path):
+    monkeypatch.setattr(reason, "DEFAULT_REASON_CACHE_DIR", tmp_path / "reason_cache")
+    monkeypatch.setenv("REASON_CACHE", "on")
+    monkeypatch.setattr(reason, "_make_client", lambda: FakeClient(smart()))
+    run(env)
+    run(env)
+    first, second = [e for e in log(env) if e["event_type"] == "reason_generated"]
+    assert (first["details"]["cached"], second["details"]["cached"]) == (False, True)
+    for e in (first, second):
+        assert e["details"]["source"] == "claude" and e["model"] == e["details"]["model"] == MODEL
 
 
 def test_mock_mode_pipeline_has_no_reason_event(env, monkeypatch):
@@ -448,7 +488,8 @@ def test_mock_mode_pipeline_has_no_reason_event(env, monkeypatch):
     v = run(env).claims[0].verdict
     assert v.reason_source == "template" and v.cited_fact_ids == []
     assert {e["event_type"] for e in log(env)}.isdisjoint({"reason_generated"})
-    assert {e["model"] for e in log(env)} == {"mock"}
+    assert {e["model"] for e in log(env) if e["event_type"] == "facts_extracted"} == {"mock"}
+    assert {e["model"] for e in log(env) if e["event_type"] != "facts_extracted"} == {"n/a"}
 
 
 def test_public_api_never_contains_the_claude_reason(env, real_run, monkeypatch):

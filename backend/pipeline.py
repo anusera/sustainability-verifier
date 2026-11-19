@@ -168,7 +168,7 @@ def run_product(
             failed.append(FailedDocument(doc_id=doc["doc_id"], file=doc["file"], reason="document file not found"))
             continue
         if sha256_file(path) != _last_logged_hash(product_id, path.name, log_path=log_path):
-            audit.log_document_ingested(product_id, path, log_path=log_path, model=run_model)
+            audit.log_document_ingested(product_id, path, log_path=log_path)
         # Always pass the context: real extraction must not fall back to the default products.json.
         context = DocContext(product_id=product_id, product_name=product["name"], doc_id=doc["doc_id"],
                              tier=doc["tier"], supply_chain=product["supply_chain"])
@@ -206,13 +206,14 @@ def run_product(
             "product_id": product_id,
             "event_type": "rules_run",
             "details": {"claim_id": claim["claim_id"], "checks": [f"{c.check_id}: {c.result}" for c in checks]},
-            "model": run_model,
         }, log_path=log_path)
         verdict = decide_verdict(product_id, claim["claim_id"], checks, facts, product["supply_chain"], now,
                                   claim_type=ctype)
         info = explain_verdict(verdict, claim, checks, facts)
         verdict = verdict.model_copy(update={"reason": info.reason, "reason_source": info.source,
                                              "cited_fact_ids": info.cited_fact_ids})
+        # The model that produced the stored reason: the explanation model if Claude wrote it, else "n/a".
+        reason_model = info.model if info.source == "claude" else "n/a"
         if run_model != "mock":  # real runs only: mock log entries stay byte-identical
             audit.append({
                 "product_id": product_id,
@@ -221,7 +222,7 @@ def run_product(
                             "cached": info.cached, "prompt_version": info.prompt_version,
                             "cited_fact_ids": info.cited_fact_ids, "rejected_reason": info.rejected_reason,
                             "reason_sha256": hashlib.sha256(info.reason.encode("utf-8")).hexdigest()},
-                "model": run_model,
+                "model": reason_model,
             }, log_path=log_path)
         previous = previous_verdict_label(product_id, claim["claim_id"], log_path=log_path)
         changed = previous != verdict.verdict
@@ -231,7 +232,7 @@ def run_product(
                 "event_type": "verdict_changed",
                 "details": {"claim_id": claim["claim_id"], "previous": previous,
                             "verdict": verdict.verdict, "reason": verdict.reason},
-                "model": run_model,
+                "model": reason_model,
             }, log_path=log_path)
         claim_results.append(ClaimResult(claim_id=claim["claim_id"], claim_text=claim["text"],
                                          checks=checks, verdict=verdict, verdict_changed=changed))

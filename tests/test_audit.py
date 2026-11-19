@@ -34,7 +34,7 @@ def chain(log, docs):
     ts = lambda n: f"2026-11-16T12:00:0{n}Z"
     log_document_ingested("tshirt-001", docs / DOC_A, log_path=log, timestamp=ts(1))
     log_document_ingested("tshirt-001", docs / DOC_B, log_path=log, timestamp=ts(2))
-    append({"product_id": "tshirt-001", "event_type": "facts_extracted", "details": {"facts": 4}},
+    append({"product_id": "tshirt-001", "event_type": "facts_extracted", "details": {"facts": 4}, "model": "mock"},
            log_path=log, timestamp=ts(3))
     append({"product_id": "tshirt-001", "event_type": "rules_run", "details": {"failed": 2}},
            log_path=log, timestamp=ts(4))
@@ -81,6 +81,7 @@ def test_document_ingested_fields(chain, docs):
     assert e["details"] == {"file_name": DOC_A}
     assert e["document_sha256"] == hashlib.sha256((docs / DOC_A).read_bytes()).hexdigest()
     assert read_entries(chain)[2]["document_sha256"] is None
+    assert [e["model"] for e in read_entries(chain)] == ["n/a", "n/a", "mock", "n/a", "n/a"]
 
 
 def test_hashing_is_binary_so_line_endings_matter(tmp_path):
@@ -142,6 +143,33 @@ def test_append_validation(log):
     with pytest.raises(ValueError):
         append({"product_id": "p"}, log_path=log)
     assert not log.exists()
+
+
+def test_model_defaults_and_facts_extracted_requires_model(log):
+    assert append({"product_id": "p", "event_type": "rules_run"}, log_path=log)["model"] == "n/a"
+    for bad in ({}, {"model": ""}, {"model": None}):
+        with pytest.raises(ValueError):
+            append({"product_id": "p", "event_type": "facts_extracted", **bad}, log_path=log)
+    assert len(read_entries(log)) == 1  # the rejected appends wrote nothing
+    stored = append({"product_id": "p", "event_type": "facts_extracted", "model": "claude-sonnet-5-5"}, log_path=log)
+    assert stored["model"] == "claude-sonnet-5-5"
+
+
+def test_mixed_old_mock_and_new_na_entries_verify(log, docs):
+    legacy = {"entry_id": 1, "timestamp": "2026-11-01T10:00:00Z", "product_id": "tshirt-001",
+              "event_type": "rules_run", "actor": "system", "details": {"claim_id": "c1"},
+              "document_sha256": None, "model": "mock", "rules_version": "rules-v1.0", "prev_hash": GENESIS_HASH}
+    legacy["entry_hash"] = audit.compute_entry_hash(legacy)
+    log.write_text(audit.canonical_json(legacy).decode("utf-8") + "\n", encoding="utf-8")
+    log_document_ingested("tshirt-001", docs / DOC_A, log_path=log)
+    append({"product_id": "tshirt-001", "event_type": "facts_extracted", "model": "mock"}, log_path=log)
+    append({"product_id": "tshirt-001", "event_type": "rules_run"}, log_path=log)
+    assert [e["model"] for e in read_entries(log)] == ["mock", "n/a", "mock", "n/a"]
+    assert verify_chain(log, docs) == {"intact": True}
+    lines = lines_of(log)
+    lines[3] = lines[3].replace('"model":"n/a"', '"model":"mock"')
+    write_lines(log, lines)
+    assert verify_chain(log, docs)["first_broken_entry"] == 4
 
 
 def test_concurrent_appends_keep_chain_intact(log, docs):

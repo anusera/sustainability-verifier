@@ -7,7 +7,7 @@ Certification body:   Global Organic Textile Certification (demo certifier)
 Scope:                Spinning and weaving of organic cotton yarn and fabric
 
 Valid from:           01 April 2023
-Valid to:             31 December 2026
+Valid to:             31 March 2026
 
 This certificate confirms that the operator named above complies with the
 organic textile standard within the stated scope and validity period.
