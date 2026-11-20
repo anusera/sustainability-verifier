@@ -1,22 +1,56 @@
 # Setup (Windows, PowerShell)
 
-Requires Python 3.11+.
+Requires Python 3.11 or newer.
 
 ```powershell
-cd C:\Users\313634\sustainability-verifier
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1      # if blocked: Set-ExecutionPolicy -Scope Process Bypass
+cd path\to\sustainability-verifier
+python -m venv venv
+venv\Scripts\Activate.ps1      # if blocked: Set-ExecutionPolicy -Scope Process Bypass
 pip install -r requirements.txt
 ```
 
-Run tests:   `pytest`
+macOS/Linux: `python3 -m venv venv`, then `source venv/bin/activate`, then `pip install -r requirements.txt`.
+
+Run tests:   `python -m pytest -q`
 Run server:  `uvicorn backend.main:app --reload`
 
-Extraction runs in MOCK_MODE by default (reads `data/mock_extractions/`).
+Extraction runs in mock mode by default (reads `data/mock_extractions/`), so no API key is needed.
+
+## Demo accounts
+
+These are demo-only logins, not real security. Do not reuse them on a hosted copy.
+
+| Role | Page | Username | Password |
+|---|---|---|---|
+| Retailer | `/dashboard` | `retailer` | `demo-retailer` |
+| Regulator | `/regulator/{product_id}` | `regulator` | `demo-regulator` |
+
+The shopper page, `/p/{product_id}`, needs no login. Product ids: `tshirt-001`, `bottle-001`,
+`bottle-eco-001`, `shirt-001`.
+
+## Try it
+
+1. Start the server and open `http://127.0.0.1:8000/dashboard`.
+2. Sign in as the retailer and click **Run verification** on each product.
+3. Open a shopper page and a regulator page, and click **Verify integrity**.
+
+## Reset to a clean state
+
+The audit log and run snapshots are created at runtime and are git-ignored. To start clean, stop the server and run:
+
+```powershell
+Remove-Item data\audit_log.jsonl -ErrorAction SilentlyContinue
+Remove-Item data\runs -Recurse -Force -ErrorAction SilentlyContinue
+```
+
+If you edit a document under `data/documents/`, restore it (`git restore data/documents/`) and reset the log, or
+Verify integrity will report that the document changed.
 
 ## Real extraction (Claude)
 
-Put `ANTHROPIC_API_KEY=...` in `.env` (git-ignored) and set `MOCK_MODE=false`. The model is `claude-sonnet-5-5`
+Put `ANTHROPIC_API_KEY=...` in `.env` (git-ignored). Turn real mode on for one terminal only, so the app never
+spends credits by accident: `$env:MOCK_MODE="false"`. Set a spending limit in the Anthropic console first.
+The model is `claude-sonnet-5-5`
 and is recorded in the audit log's `model` field for real runs.
 
 - **Cache:** real results are cached in `data/extraction_cache/` (git-ignored), keyed by document SHA-256, prompt
